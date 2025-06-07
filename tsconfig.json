@@ -1,0 +1,46 @@
+{
+	"exclude": [
+		"node_modules",
+		"dist",
+	],
+	"compilerOptions": {
+		"module": "ESNext",
+		"target": "ESNext",
+
+		"moduleResolution": "bundler",
+		"allowSyntheticDefaultImports": true,
+		"esModuleInterop": true,
+		
+		"strict": true,
+		"strictBindCallApply": true,
+		"strictFunctionTypes": true,
+		"strictPropertyInitialization": true,
+		"strictNullChecks": true,
+		"noImplicitThis": true,
+		"noImplicitReturns": true,
+		"noUncheckedIndexedAccess": true,
+		"alwaysStrict": true,
+		"forceConsistentCasingInFileNames": true,
+
+		"verbatimModuleSyntax": true,
+
+		"preserveConstEnums": true,
+		"removeComments": true,
+		"sourceMap": true,
+		"inlineSources": false,
+
+		"noEmit": true,
+		//"skipDefaultLibCheck": true,
+		//"skipLibCheck": true,
+
+		"lib": ["ESNext", "DOM", "DOM.Iterable"],
+		
+		"emitDecoratorMetadata": true,
+		"experimentalDecorators": true,
+
+		//"baseUrl": "./src",
+		//"paths": {
+		//	//"$lib/*": ["./lib/*"]
+		//}
+	}
+}

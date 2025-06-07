@@ -1,0 +1,100 @@
+@import 'tailwindcss';
+@config '../tailwind.config.js';
+
+@theme static {
+	--fontFamily:  Arial, sans-serif; /* 'Noto Sans TC' */
+	--font-mono:  'Courier New', Courier, monospace;
+
+	--color-primary-50: var(--color-teal-50);
+	--color-primary-100: var(--color-teal-100);
+	--color-primary-200: var(--color-teal-200);
+	--color-primary-300: var(--color-teal-300);
+	--color-primary-400: var(--color-teal-400);
+	--color-primary-500: var(--color-teal-500);
+	--color-primary-600: var(--color-teal-600);
+	--color-primary-700: var(--color-teal-700);
+	--color-primary-800: var(--color-teal-800);
+	--color-primary-900: var(--color-teal-900);
+	--color-primary-950: var(--color-teal-950);
+
+	--color-surface: #181818;
+	--color-onSurface: #eee;
+	
+	--color-surfaceContainer: #222;
+	--color-onSurfaceContainer: #eee;
+	
+	--color-error: #FF4D4D;
+	--color-success: #2ED3A0;
+	--color-warning: #FFBB33;
+	--color-info: #3D7DEC;
+	
+	--color-divider: rgba(255, 255, 255, 0.12);
+	--color-containerBorder: rgba(255, 255, 255, 0.15);
+	--color-inkWell: rgba(255, 255, 255, 0.10);
+	--color-border: rgba(255, 255, 255, 0.15);
+	--color-overlay: rgba(0, 0, 0, 0.5);
+}
+
+:root {
+	--fontFamily: var(--fontFamily, Arial, sans-serif);
+	background-color: var(--color-surface);
+	color: var(--color-onSurface);
+}
+
+.SvelteOutlet {
+	position: fixed;
+
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+}
+
+.SvelteOutlet > * {
+	position: absolute !important;
+	inset: 0 !important;
+}
+
+
+@layer base {
+	html, body {
+		position: relative;
+		width: 100%;
+		height: 100%;
+		margin: 0px;
+
+		overflow: hidden;
+		overscroll-behavior: none;
+		-webkit-text-size-adjust: none;
+		-webkit-tap-highlight-color: transparent;
+	}
+
+	* {
+		min-height: 0;
+		min-width: 0;
+
+		outline-color: var(--color-primary-500);
+	}
+
+	hr {
+		border-top: 1px solid var(--color-border);
+	}
+
+	::-webkit-scrollbar {
+		width: 8px;
+		height: 8px;
+	}
+
+	::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	::-webkit-scrollbar-thumb {
+		background: var(--color-surfaceContainerH);
+		border-radius: var(--radius-full);
+	}
+
+	::-webkit-scrollbar-thumb:hover {
+		background: var(--color-primary-700);
+	}
+}
