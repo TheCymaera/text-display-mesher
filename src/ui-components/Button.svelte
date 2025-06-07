@@ -4,7 +4,7 @@
 	interface Props {
 		type?: "button" | "submit",
 		variant?: keyof typeof buttonVariants,
-		onPress?: () => void,
+		onPress?: (originalEvent: MouseEvent & { currentTarget: HTMLButtonElement }) => void,
 		disabled?: boolean,
 		on?: boolean,
 		className?: string,
@@ -31,7 +31,7 @@
 	use:buttonBehaviour
 	type="{type}"
 	class="{className} {buttonVariants[variant]}"
-	onclick={onPress} 
+	onclick={onPress}
 	disabled={disabled} 
 	data-on={on ? "" : undefined}
 >

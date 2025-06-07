@@ -4,7 +4,7 @@
 	interface Props {
 		label: string,
 		value: string,
-		onChange?: (color: string) => void,
+		onInput?: (color: string) => void,
 		className?: string,
 	}
 
@@ -12,7 +12,7 @@
 		label,
 		value = $bindable(),
 		className = "",
-		onChange = () => {},
+		onInput = () => {},
 	}: Props = $props();
 
 	const id = generateElementID('color-field');
@@ -22,19 +22,28 @@
 	<label class="block mb-2 font-medium" for={id}>
 		{label}
 	</label>
-	<div class="flex items-center gap-3">
+	<div class="grid grid-cols-[min-content_auto] gap-2 items-center">
 		<input 
 			type="color" 
 			bind:value={value}
-			onchange={() => onChange(value)}
-			class="w-10 h-10 rounded-md cursor-pointer border border-border overflow-hidden"
+			oninput={() => onInput(value)}
+			class="
+				aspect-ratio-1 h-full
+				border-[.08rem] border-containerBorder rounded-md bg-transparent
+				focus-visible:outline-[3px] outline-primary-500 outline-offset-[-3px]
+				cursor-pointer
+			"
 		/>
 		<input 
 			id={id}
 			type="text" 
 			bind:value={value}
-			onchange={() => onChange(value)}
-			class="flex-1 border border-border rounded-md px-3 py-2 text-sm"
+			oninput={() => onInput(value)}
+			class="
+				flex-1
+				p-3 border-[.08rem] border-containerBorder rounded-md bg-transparent
+				focus-visible:outline-[3px] outline-primary-500 outline-offset-[-3px]
+			"
 			placeholder="#RRGGBB"
 		/>
 	</div>

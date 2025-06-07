@@ -64,6 +64,9 @@ function initScene() {
 	// Create camera
 	camera = new THREE.PerspectiveCamera(75, clientWidth / clientHeight, 0.1, 1000);
 	camera.position.z = 5;
+	camera.position.x = 4;
+	camera.position.y = -3;
+	camera.position.normalize().multiplyScalar(10);
 
 	// Create renderer
 	renderer = new THREE.WebGLRenderer({ canvas, antialias: true });

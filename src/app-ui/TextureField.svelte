@@ -4,9 +4,11 @@
 	import FileField from '../ui-components/FileDropZone.svelte';
 	import ColorField from '../ui-components/ColorField.svelte';
 	import { untrack } from 'svelte';
-	import { loadImageAsCanvas } from '../utilities/misc';
+	import { createNoiseImage, flatColorCanvas, loadImageAsCanvas } from '../utilities/misc';
 
-	type ValueType = HTMLCanvasElement | THREE.Color | 'random';
+	const NOISE_TEXTURE = new THREE.CanvasTexture(createNoiseImage(100, 100));
+
+	type ValueType = THREE.Texture | THREE.Color;
 	type ValueTypeName = 'file' | 'color' | 'random';
 
 	interface Props {
@@ -24,9 +26,9 @@
 	}: Props = $props();
 
 	function typeOf(value: ValueType): ValueTypeName {
-		if (value instanceof HTMLImageElement) return 'file';
+		if (value === NOISE_TEXTURE) return 'random';
 		if (value instanceof THREE.Color) return 'color';
-		if (value === 'random') return 'random';
+		if (value instanceof THREE.Texture) return 'file';
 		return 'color';
 	}
 
@@ -38,19 +40,19 @@
 		untrack(()=>{
 			if (didSwitchType) return;
 
-			if (value instanceof HTMLCanvasElement) {
+			if (value instanceof THREE.Texture) {
 				fileInput = value;
 				selectedType = 'file';
 			} else if (value instanceof THREE.Color) {
 				colorInput = "#" + value.getHexString();
 				selectedType = 'color';
-			} else if (value === 'random') {
+			} else if (value === NOISE_TEXTURE) {
 				selectedType = 'random';
 			}
 		})
 	})
 	
-	let fileInput: HTMLCanvasElement = $state(document.createElement('canvas'));
+	let fileInput: THREE.Texture = $state(new THREE.CanvasTexture(flatColorCanvas(new THREE.Color(0xff00ff))));
 	let colorInput: string = $state(value instanceof THREE.Color ? "#" + value.getHexString() : '#ffffff');
 
 	function switchToType(type: 'file' | 'color' | 'random') {
@@ -58,7 +60,7 @@
 		value = ({
 			file: fileInput,
 			color: new THREE.Color(colorInput),
-			random: 'random'
+			random: NOISE_TEXTURE
 		} as const)[type];
 		onChange(value);
 		selectedType = type;
@@ -68,35 +70,32 @@
 </script>
 
 <div class={className}>
-	<div class="flex justify-between items-center mb-2">
-		<!-- svelte-ignore a11y_label_has_associated_control -->
-		<label class="font-medium">
-			{label}
-		</label>
+	<div class="font-medium mb-2">
+		{label}
+	</div>
 		
-		<div class="flex gap-2">
-			<Button 
-				variant={selectedType === 'file' ? 'filled' : 'outlined'} 
-				onPress={() => switchToType('file')}
-				className="py-1 px-3 text-sm"
-			>
-				File
-			</Button>
-			<Button 
-				variant={selectedType === 'color' ? 'filled' : 'outlined'} 
-				onPress={() => switchToType('color')}
-				className="py-1 px-3 text-sm"
-			>
-				Color
-			</Button>
-			<Button 
-				variant={selectedType === 'random' ? 'filled' : 'outlined'} 
-				onPress={() => switchToType('random')}
-				className="py-1 px-3 text-sm"
-			>
-				Random
-			</Button>
-		</div>
+	<div class="flex gap-2 mb-4">
+		<Button 
+			variant={selectedType === 'file' ? 'filled' : 'outlined'} 
+			onPress={() => switchToType('file')}
+			className="!py-1 text-sm"
+		>
+			File
+		</Button>
+		<Button 
+			variant={selectedType === 'color' ? 'filled' : 'outlined'} 
+			onPress={() => switchToType('color')}
+			className="!py-1 text-sm"
+		>
+			Color
+		</Button>
+		<Button 
+			variant={selectedType === 'random' ? 'filled' : 'outlined'} 
+			onPress={() => switchToType('random')}
+			className="!py-1 text-sm"
+		>
+			Random
+		</Button>
 	</div>
 
 	{#if selectedType === 'file'}
@@ -104,7 +103,7 @@
 			label=""
 			accept="image/*"
 			onChange={async (file)=> {
-				value = await loadImageAsCanvas(file);
+				value = new THREE.CanvasTexture(await loadImageAsCanvas(file));
 				onChange(value);
 			}}
 		/>
@@ -112,7 +111,7 @@
 		<ColorField 
 			label=""
 			bind:value={colorInput}
-			onChange={() => {
+			onInput={() => {
 				value = new THREE.Color(colorInput);
 				onChange(value);
 			}}

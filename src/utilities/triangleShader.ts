@@ -1,12 +1,12 @@
 import * as THREE from "three"
-import type { Triangle } from "./triangulatePolygon"
 import { Random } from "./misc"
+import type { MeshTriangle } from "./getPolygonsFromMesh"
 
-export type UVColorProvider = (u: number, v: number) => THREE.Color
-export type TriangleShader = (triangle: Triangle, normal: THREE.Vector3) => THREE.Color
+type UVColorProvider = (u: number, v: number) => THREE.Color
+export type TriangleShader = (triangle: MeshTriangle, normal: THREE.Vector3) => THREE.Color
 
 export function uvSamplerShader(colorProvider: UVColorProvider): TriangleShader {
-	return (triangle: Triangle) => sampleTriangle(colorProvider, triangle)
+	return (triangle: MeshTriangle) => sampleTriangle(colorProvider, triangle)
 }
 
 export function canvasSamplerShader(canvas: HTMLCanvasElement): TriangleShader {
@@ -14,24 +14,10 @@ export function canvasSamplerShader(canvas: HTMLCanvasElement): TriangleShader {
 	return uvSamplerShader((u, v) => sampleCanvasColor(context, u, v));
 }
 
-
-export function threeJSMaterialSamplerShader(material: THREE.Material): TriangleShader {
+export function threeJSTextureShader(material: THREE.Material): TriangleShader {
 	if (material instanceof THREE.MeshBasicMaterial || material instanceof THREE.MeshStandardMaterial) {
 		if (material.map) {
-			let canvas: HTMLCanvasElement;
-			if (material.map.image instanceof HTMLCanvasElement) {
-				canvas = material.map.image;
-			} else if (material.map.image instanceof HTMLImageElement) {
-				canvas = document.createElement('canvas');
-				canvas.width = material.map.image.width;
-				canvas.height = material.map.image.height;
-				const ctx = canvas.getContext('2d', { willReadFrequently: true });
-				if (!ctx) throw new Error("Failed to get canvas context");
-				ctx.drawImage(material.map.image, 0, 0);
-			} else {
-				throw new Error("Unsupported texture type for material map");
-			}
-			return canvasSamplerShader(canvas);
+			return canvasSamplerShader(toCanvas(material.map.image));
 		}
 
 		return flatColorShader(material.color);
@@ -40,12 +26,22 @@ export function threeJSMaterialSamplerShader(material: THREE.Material): Triangle
 	return flatColorShader(new THREE.Color(0xff0000));
 }
 
+export function threeJSEmissiveShader(material: THREE.Material): TriangleShader {
+	if (material instanceof THREE.MeshStandardMaterial) {
+		if (material.emissiveMap) {
+			return canvasSamplerShader(toCanvas(material.emissiveMap.image));
+		}
+		return flatColorShader(material.emissive);
+	}
+	return flatColorShader(new THREE.Color(0x000000));
+}
+
 export function shadowShader(shader: TriangleShader, { light, minBrightness, maxBrightness }: {
 	light: THREE.Vector3,
 	minBrightness: number,
 	maxBrightness: number,
 }): TriangleShader {
-	return function(triangle: Triangle, normal: THREE.Vector3): THREE.Color {
+	return function(triangle: MeshTriangle, normal: THREE.Vector3): THREE.Color {
 		const color = shader(triangle, normal)
 		const lightDot = normal.dot(light)
 		const brightness = (lightDot + 1) / 2 * (maxBrightness - minBrightness) + minBrightness
@@ -58,7 +54,7 @@ export function shadowShader(shader: TriangleShader, { light, minBrightness, max
 	}
 }
 
-export function RANDOM_COLOR_SHADER(triangle: Triangle): THREE.Color {
+export function RANDOM_COLOR_SHADER(triangle: MeshTriangle): THREE.Color {
 	const seed = hashCode(triangle.first.position) + hashCode(triangle.second.position) + hashCode(triangle.third.position)
 	const random = new Random(seed)
 
@@ -70,7 +66,7 @@ export function RANDOM_COLOR_SHADER(triangle: Triangle): THREE.Color {
 }
 
 export function flatColorShader(color: THREE.Color): TriangleShader {
-	return ()=> color
+	return () => color
 }
 
 function hashCode(vector: THREE.Vector3): number {
@@ -94,9 +90,8 @@ const barycentricCoordinateForSampling = [
 ] as const;
 
 function sampleTriangle(
-	//image: CanvasRenderingContext2D,
 	uvColorProvider: UVColorProvider,
-	triangle: Triangle
+	triangle: MeshTriangle
 ): THREE.Color {
 	let red = 0;
 	let green = 0;
@@ -134,4 +129,18 @@ function sampleCanvasColor(image: CanvasRenderingContext2D, x: number, y: number
 		pixelData[1]! / 255,
 		pixelData[2]! / 255
 	);
+}
+
+function toCanvas(image: HTMLImageElement | HTMLCanvasElement): HTMLCanvasElement {
+	if (image instanceof HTMLCanvasElement) {
+		return image;
+	}
+
+	const canvas = document.createElement('canvas');
+	canvas.width = image.width;
+	canvas.height = image.height;
+	const ctx = canvas.getContext('2d', { willReadFrequently: true });
+	if (!ctx) throw new Error("Failed to get canvas context");
+	ctx.drawImage(image, 0, 0);
+	return canvas;
 }

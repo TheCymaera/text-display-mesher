@@ -1,9 +1,8 @@
 import * as THREE from 'three';
-import type { Mesh, MeshPolygon } from './mesh';
-import { triangleNormal, triangulatePolygon as triangulatePolygon } from './triangulatePolygon';
 import { lookAlongQuaternion, shearMatrix, translationMatrix } from './maths';
-import { type TriangleShader } from './triangleShader';
+import { threeJSEmissiveShader, threeJSTextureShader, type TriangleShader } from './triangleShader';
 import { benchmark, deepFreeze } from './misc';
+import { getTrianglesFromGroup, getPolygonsFromMesh as getTrianglesFromMesh } from './getPolygonsFromMesh';
 
 export interface TextDisplayBrightness {
 	sky: number;
@@ -16,13 +15,12 @@ export interface TextDisplayEntity {
 	brightness: TextDisplayBrightness;
 }
 
-
-const unitSquare = deepFreeze(new THREE.Matrix4()
+export const unitSquare = deepFreeze(new THREE.Matrix4()
 	.multiply(translationMatrix(-0.1 + 0.5, -0.5 + 0.5, 0))
 	.scale(new THREE.Vector3(8.0, 4.0, 1)));
 
 // Left aligned
-const unitTriangle = deepFreeze([
+export const unitTriangle = deepFreeze([
 	// Left
 	new THREE.Matrix4()
 		.scale(new THREE.Vector3(0.5, 0.5, 0.5))
@@ -96,12 +94,21 @@ function textDisplayTriangle(
 	};
 }
 
-export function meshToTextDisplays(mesh: Mesh, textureShader: TriangleShader, emissiveShader: TriangleShader): TextDisplayEntity[] {
+export function meshToTextDisplays(mesh: THREE.Mesh | THREE.Group, textureShaderWrapper: (baseShader: TriangleShader) => TriangleShader): TextDisplayEntity[] {
 	using _ = benchmark("meshToTextDisplays");
-	
-	const triangulated = mesh.faces.flatMap((polygon: MeshPolygon) => {
-		return triangulatePolygon(polygon);
-	});
+
+	const triangulated = mesh instanceof THREE.Mesh ? getTrianglesFromMesh(mesh) : getTrianglesFromGroup(mesh);
+
+	// Convert materials to shaders
+	const materialsToShaders = new Map<THREE.Material, { texture: TriangleShader, emissive: TriangleShader }>();
+	for (const triangle of triangulated) {
+		const material = triangle.first.material;
+		if (!materialsToShaders.has(material)) {
+			const textureShader = textureShaderWrapper(threeJSTextureShader(material));
+			const emissiveShader = threeJSEmissiveShader(material);
+			materialsToShaders.set(material, { texture: textureShader, emissive: emissiveShader });
+		}
+	}
 
 	return triangulated.flatMap(triangle => {
 		const textDisplay = textDisplayTriangle(
@@ -111,9 +118,11 @@ export function meshToTextDisplays(mesh: Mesh, textureShader: TriangleShader, em
 		);
 
 		const normal = textDisplay.zAxis
+		const material = triangle.first.material;
+		const shaders = materialsToShaders.get(material)!;
 		
-		const color = textureShader(triangle, normal);
-		const emissiveColor = emissiveShader(triangle, normal);
+		const color = shaders.texture(triangle, normal);
+		const emissiveColor = shaders.emissive(triangle, normal);
 		const emission = emissiveColor.r + emissiveColor.g + emissiveColor.b / 3;
 		const brightness = {
 			sky: 15,
@@ -122,157 +131,4 @@ export function meshToTextDisplays(mesh: Mesh, textureShader: TriangleShader, em
 
 		return textDisplay.transforms.map(transform => ({ color, transform, brightness }));
 	});
-}
-
-const textDisplayMesh = new THREE.Mesh(
-	new THREE.PlaneGeometry(1, 1)
-	.translate(0.5, 0.5, 0)
-	.applyMatrix4(unitSquare.clone().invert()),
-);
-
-
-export function textDisplaysToMesh(textDisplays: TextDisplayEntity[]) {
-	using _ = benchmark("textDisplaysToMesh");
-
-	const group = new THREE.Group();
-
-	for (const { color, transform, brightness } of textDisplays) {
-		const mesh = textDisplayMesh.clone();
-		mesh.matrixAutoUpdate = false;
-
-		const material = new THREE.MeshStandardMaterial();
-		material.color = color;
-		material.emissive = color;
-		material.emissiveIntensity = brightness.block / 15;
-		material.flatShading = true;
-
-		mesh.material = material;
-		mesh.applyMatrix4(transform);
-		group.add(mesh);
-	}
-
-	return group;
-}
-
-
-export function textDisplaysToSummonCommand(textDisplays: TextDisplayEntity[], {
-	//maxPassengers = Infinity,
-	maxCommandLength = 32500,
-}= {}) {
-	using _ = benchmark("textDisplaysToSummonCommand");
-
-	const commands: string[] = [];
-	const containerPosition = "~ ~ ~";
-
-	const summonCommand = (batch: TextDisplayEntity[])=>{
-		if (batch.length === 0) return "";
-
-		const containerNBT = textDisplayNBT(batch[0]!);
-		const passengersNBT = batch.slice(1).map(i => nbtToString(textDisplayNBT(i))).join(",")
-
-		delete containerNBT.id;
-		if (passengersNBT.length) containerNBT.Passengers = `[${passengersNBT}]`;
-		return `summon minecraft:text_display ${containerPosition} ${nbtToString(containerNBT)}`;
-	}
-	const batchFits = (command: string, _batch: TextDisplayEntity[]) => {
-		return command.length <= maxCommandLength;// && batch.length <= maxPassengers;
-	}
-
-	let added = 0;
-	
-	let expectedBatchSize = maxCommandLength / 100;
-
-	const batches: TextDisplayEntity[][] = [];
-
-	while (added < textDisplays.length) {
-		// Create batch with expected size
-		const currentBatch = textDisplays.slice(added, Math.min(added + expectedBatchSize, textDisplays.length));
-		added += currentBatch.length;
-		
-		
-		let currentCommand;
-
-		// keep adding to the current batch until it no longer fits
-		while (batchFits(currentCommand = summonCommand(currentBatch), currentBatch) && added < textDisplays.length) {
-			currentBatch.push(textDisplays[added]!);
-			added++;
-		}
-
-		// pop until it fits again
-		while (!batchFits(currentCommand = summonCommand(currentBatch), currentBatch) && currentBatch.length > 0) {
-			currentBatch.pop();
-			added--;
-		}
-
-		// add the current batch to the commands
-		expectedBatchSize = currentBatch.length;
-		commands.push(currentCommand);
-		batches.push(currentBatch);
-	}
-
-	return { commands, batches };
-}
-
-function nbtToString(components: Record<string, string>): string {
-	return `{${Object.entries(components).map(([key, value]) => `${key}:${value}`).join(",")}}`;
-}
-
-function textDisplayNBT(textDisplay: TextDisplayEntity) {
-	//const colorCode = "#" + textDisplay.color.getHexString().padStart(6, '0');
-	const colorCode = colorToSignedInt(textDisplay.color, 1);
-	const roundToFloat = (value: number): string => {
-		const pow = 1_0000000;
-		const rounded = Math.round(value * pow) / pow;
-		return rounded + "f";
-	};
-
-	const reordered = [
-		textDisplay.transform.elements[0],
-		textDisplay.transform.elements[4],
-		textDisplay.transform.elements[8],
-		textDisplay.transform.elements[12],
-		textDisplay.transform.elements[1],
-		textDisplay.transform.elements[5],
-		textDisplay.transform.elements[9],
-		textDisplay.transform.elements[13],
-		textDisplay.transform.elements[2],
-		textDisplay.transform.elements[6],
-		textDisplay.transform.elements[10],
-		textDisplay.transform.elements[14],
-		textDisplay.transform.elements[3],
-		textDisplay.transform.elements[7],
-		textDisplay.transform.elements[11],
-		textDisplay.transform.elements[15]
-	];
-
-	const transformArray = reordered.map(v => roundToFloat(v)).join(",");
-	const components: Record<string, string> = {
-		id: `"minecraft:text_display"`,
-		text: `'" "'`,
-		transformation: `[${transformArray}]`,
-		background: colorCode.toString(),
-	}
-
-	if (textDisplay.brightness.sky !== 15 || textDisplay.brightness.block !== 0) {
-		components.brightness = `{sky:${textDisplay.brightness.sky},block:${textDisplay.brightness.block}}`;
-	}
-
-
-	return components;
-}
-
-function colorToSignedInt(color: THREE.Color, alpha: number = 1): number {
-	// Convert color components from 0-1 to 0-255
-	const r = Math.round(color.r * 255);
-	const g = Math.round(color.g * 255);
-	const b = Math.round(color.b * 255);
-	const a = Math.round(alpha * 255);
-
-	// Combine into a 32-bit unsigned int (ARGB format: 0xAARRGGBB)
-	const unsignedInt = (a << 24) | (r << 16) | (g << 8) | b;
-
-	// Convert to signed 32-bit int (two's complement)
-	// JavaScript bitwise operations work on 32-bit signed integers,
-	// so this conversion happens automatically when we use the value
-	return unsignedInt;
 }

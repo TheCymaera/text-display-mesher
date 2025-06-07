@@ -96,17 +96,64 @@ export function createNoiseImage(width: number, height: number): HTMLCanvasEleme
 	return canvas;
 }
 
-export function createFlatColorImage(color: THREE.Color): HTMLCanvasElement {
-	const width = 1;
-	const height = 1;
-
+export function flatColorCanvas(color: THREE.Color) {
 	const canvas = document.createElement('canvas');
-	canvas.width = width;
-	canvas.height = height;
+	canvas.width = 1;
+	canvas.height = 1;
 	const ctx = canvas.getContext('2d');
 	if (!ctx) throw new Error("Failed to get canvas context");
 
-	ctx.fillStyle = color.getStyle();
-	ctx.fillRect(0, 0, width, height);
+	ctx.fillStyle = `#${color.getHexString()}`;
+	ctx.fillRect(0, 0, canvas.width, canvas.height);
 	return canvas;
+}
+
+//export function debounce<T extends (...args: any[]) => void>(delay: number, func: T): T & { bump: () => void } {
+//	let timeoutId: ReturnType<typeof setTimeout> | null = null;
+//	let pendingArgs: any[] | null = null;
+//	let pendingThis: any = null;
+
+//	function bump() {
+//		if (timeoutId !== null) {
+//			clearTimeout(timeoutId);
+//		}
+		
+//		if (pendingArgs) {
+//			const args = pendingArgs;
+//			const thisArg = pendingThis;
+//			pendingArgs = null;
+//			pendingThis = null;
+//			timeoutId = setTimeout(() => {
+//				timeoutId = null;
+//				func.apply(thisArg, args);
+//			}, delay);
+//		}
+//	}
+
+//	const out = function(this: any, ...args: Parameters<T>) {
+//		pendingArgs = args;
+//		pendingThis = this;
+//		bump();
+//	} as unknown as T;
+	
+//	// @ts-expect-error Add method
+//	out.bump = bump;
+	
+//	return out as ReturnType<typeof debounce<T>>
+//}
+
+export function debounce<T extends (...args: any[]) => void>(delay: number, func: T): T {
+	let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+	function debounced(this: any, ...args: Parameters<T>) {
+		if (timeoutId !== null) {
+			clearTimeout(timeoutId);
+		}
+		timeoutId = setTimeout(() => {
+			timeoutId = null;
+			func.apply(this, args);
+		}, delay);
+	}
+
+	return debounced as T;
 }

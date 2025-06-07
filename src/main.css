@@ -23,16 +23,9 @@
 	--color-surfaceContainer: #222;
 	--color-onSurfaceContainer: #eee;
 	
-	--color-error: #FF4D4D;
-	--color-success: #2ED3A0;
-	--color-warning: #FFBB33;
-	--color-info: #3D7DEC;
-	
-	--color-divider: rgba(255, 255, 255, 0.12);
-	--color-containerBorder: rgba(255, 255, 255, 0.15);
-	--color-inkWell: rgba(255, 255, 255, 0.10);
-	--color-border: rgba(255, 255, 255, 0.15);
-	--color-overlay: rgba(0, 0, 0, 0.5);
+	--color-inkWell: #FFFFFF88;
+	--color-containerBorder: #FFFFFF22;
+	--color-divider: #FFFFFF11;
 }
 
 :root {

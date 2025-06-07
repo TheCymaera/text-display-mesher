@@ -16,10 +16,26 @@
 		className = "",
 	}: Props = $props();
 
+	let lastDroppedFileName = "No file selected";
+
+	function openDialog(event: MouseEvent) {
+		event.preventDefault();
+		const input = document.createElement("input");
+		input.type = "file";
+		input.accept = accept;
+		input.style.display = "none";
+		input.id = id;
+		input.addEventListener("change", handleFileChange);
+		document.body.appendChild(input);
+		input.click();
+		document.body.removeChild(input);
+	}
+
 	function handleFileChange(event: Event) {
 		const input = event.target as HTMLInputElement;
 		if (input.files && input.files.length > 0) {
 			onChange(input.files[0]!);
+			lastDroppedFileName = input.files[0]!.name;
 		}
 	}
 
@@ -27,24 +43,28 @@
 </script>
 
 <div class={className}>
-	<label 
+	<div 
 		class="block mb-2 font-medium" 
-		for={id} 
 	>
 		{#if typeof label === 'string'}
 			{label}
 		{:else}
 			{@render label()}
 		{/if}
-	</label>
-	<input 
-		type="file" 
-		{accept}
-		onchange={handleFileChange}
-		{id}
-		class="
-			block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-onSurface/10 file:text-primary-500 hover:file:bg-primary-300/20
-			cursor-pointer file:cursor-pointer
-		"
-	/>
+	</div>
+	<div class="flex items-center gap-4">
+		<button 
+			class="
+				max-w-max
+				text-sm py-2 px-4 rounded border-0 font-semibold bg-onSurface/10 text-primary-500 hover:bg-primary-300/20
+				cursor-pointer
+			"
+			onclick={openDialog}
+		>
+			Choose File
+		</button>
+		<!--<span class="text-sm text-onSurface/70">
+			{lastDroppedFileName}
+		</span>-->
+	</div>
 </div>

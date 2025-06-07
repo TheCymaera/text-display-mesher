@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ModelLoaderContainer from "./ModelLoaderContainer.svelte";
+  import ModelLoaderContainer from "./MainView.svelte";
 
 </script>
 <svelte:boundary>
