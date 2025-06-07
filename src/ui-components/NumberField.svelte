@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { generateElementID } from '../utilities/misc';
+
 	interface Props {
 		type?: string,
 		value: number,
@@ -46,14 +48,17 @@
 		input.value = (emptyIfNull && value === nullValue) ? "" : `${value}`
 	});
 
+	const id = generateElementID("number-field");
+
 </script>
 
-<label class="block {className}">
-	<div style:display={hideLabel ? "none" : ""}>
+<div class="block {className}">
+	<label class="pl-[var(--radius-md)]" style:display={hideLabel ? "none" : ""} for={id}>
 		{label}
-	</div>
+	</label>
 	<div class="inputContainer">
 		<input 
+			id={id}
 			type={type}
 			inputmode="decimal"
 			class="
@@ -79,10 +84,10 @@
 			{@render leadingIcon?.()}
 		</div>
 	</div>
-	<output class="pl-1" style:display={(error || hint) ? "" : "none"}>
-		<small class="whitespace-pre {error ? "text-red-500" : ""}">{error || hint}</small>
+	<output class="pl-[var(--radius-md)]" style:display={(error || hint) ? "" : "none"}>
+		<small class="whitespace-pre {error ? "text-red-500" : "opacity-80"}">{error || hint}</small>
 	</output>
-</label>
+</div>
 <style>
 .inputContainer {
 	display: grid;

@@ -117,7 +117,10 @@ function createObjMesh(objText: string, material: THREE.Material): THREE.Group {
 
 function changeButtonText(event: MouseEvent, text: string) {
 	const button = event.currentTarget as HTMLButtonElement;
+	
 	const originalText = button.textContent;
+	if (originalText === text) return;
+
 	button.textContent = text;
 	setTimeout(() => button.textContent = originalText, 2000);
 }
@@ -125,7 +128,7 @@ function changeButtonText(event: MouseEvent, text: string) {
 loadMountainray()
 </script>
 
-<div class="grid grid-cols-[450px_1fr]">
+<div class="grid grid-cols-[25em_1fr]">
 	<!-- Sidebar -->
 	<div class="bg-surfaceContainer text-onSurfaceContainer p-4 overflow-y-auto">
 		<h2 class="text-xl font-bold mb-4">Presets</h2>
@@ -137,7 +140,7 @@ loadMountainray()
 			] as preset}
 				<Button
 					variant="outlined"
-					className="!py-1 text-sm"
+					className="!py-1 !px-0 text-sm"
 					onPress={(event) => {
 						preset.load();
 						changeButtonText(event, 'Loaded!');
@@ -204,7 +207,7 @@ loadMountainray()
 						bind:value={lightPosition.z}
 					/>
 				</div>
-				<small>Direction of the light source</small>
+				<small class="opacity-80">Direction of the light source</small>
 				<div class="mb-3"></div>
 				
 				<div class="grid grid-cols-2 gap-4">
