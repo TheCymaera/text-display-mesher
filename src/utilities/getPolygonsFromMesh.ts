@@ -71,7 +71,7 @@ export function getPolygonsFromMesh(mesh: THREE.Mesh): MeshTriangle[] {
 		polygons.push(new MeshTriangle(
 			getMeshVertex(positionAttribute, uvAttribute, firstIndex, material),
 			getMeshVertex(positionAttribute, uvAttribute, secondIndex, material),
-			getMeshVertex(positionAttribute, uvAttribute, thirdIndex, material)
+			getMeshVertex(positionAttribute, uvAttribute, thirdIndex, material),
 		));
 	}
 	
@@ -110,31 +110,11 @@ function applyTransformations(
 	polygons: MeshTriangle[],
 	meshOrGroup: THREE.Mesh | THREE.Group
 ) {
-	if (meshOrGroup.matrixWorld) {
-		polygons.forEach(polygon => {
-			polygon.forEach(vertex => {
-				vertex.position.applyMatrix4(meshOrGroup.matrixWorld);
-			});
+	polygons.forEach(polygon => {
+		polygon.forEach(vertex => {
+			vertex.position.applyMatrix4(meshOrGroup.matrix);
 		});
-	}
-
-	// apply scale
-	if (meshOrGroup.scale) {
-		polygons.forEach(polygon => {
-			polygon.forEach(vertex => {
-				vertex.position.multiply(meshOrGroup.scale);
-			});
-		});
-	}
-
-	// apply translation
-	if (meshOrGroup.position) {
-		polygons.forEach(polygon => {
-			polygon.forEach(vertex => {
-				vertex.position.add(meshOrGroup.position);
-			});
-		});
-	}
+	});
 	
 	return polygons;
 }

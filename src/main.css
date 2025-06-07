@@ -2,8 +2,8 @@
 @config '../tailwind.config.js';
 
 @theme static {
-	--fontFamily:  Arial, sans-serif; /* 'Noto Sans TC' */
-	--font-mono:  'Courier New', Courier, monospace;
+	--fontFamily: Arial, sans-serif; /* 'Noto Sans TC' */
+	--font-mono: 'Courier New', Courier, monospace;
 
 	--color-primary-50: var(--color-teal-50);
 	--color-primary-100: var(--color-teal-100);
@@ -74,8 +74,8 @@
 	}
 
 	::-webkit-scrollbar {
-		width: 8px;
-		height: 8px;
+		width: .7rem;
+		height: .7rem;
 	}
 
 	::-webkit-scrollbar-track {
@@ -83,11 +83,11 @@
 	}
 
 	::-webkit-scrollbar-thumb {
-		background: var(--color-surfaceContainerH);
-		border-radius: var(--radius-full);
+		background: color-mix(in srgb, transparent, var(--color-onSurfaceContainer) 10%);
+		border-radius: 9999px;
 	}
 
 	::-webkit-scrollbar-thumb:hover {
-		background: var(--color-primary-700);
+		background: color-mix(in srgb, transparent, var(--color-onSurfaceContainer) 20%);
 	}
 }

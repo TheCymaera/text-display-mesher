@@ -1,9 +1,26 @@
 <script lang="ts">
-  import ModelLoaderContainer from "./MainView.svelte";
+import MainView from "./MainView.svelte";
+import AppInfo from "./AppInfo.svelte";
+import { fade } from "svelte/transition";
 
+let hash = $state(window.location.hash);
 </script>
+<svelte:window 
+	on:hashchange={()=> hash = window.location.hash}
+/>
 <svelte:boundary>
-	<ModelLoaderContainer />
+	<MainView />
+
+	{#if hash === "#info"}
+		<div 
+			class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-auto"
+			transition:fade={{ duration: 200 }}
+		>
+			<div class="w-full max-w-2xl">
+				<AppInfo />
+			</div>
+		</div>
+	{/if}
 
 	{#snippet failed(error)}
 		<div class="

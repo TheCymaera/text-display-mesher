@@ -65,7 +65,7 @@ function initScene() {
 	camera = new THREE.PerspectiveCamera(75, clientWidth / clientHeight, 0.1, 1000);
 	camera.position.z = 5;
 	camera.position.x = 4;
-	camera.position.y = -3;
+	camera.position.y = 3;
 	camera.position.normalize().multiplyScalar(10);
 
 	// Create renderer
@@ -97,14 +97,14 @@ function animate() {
 	renderer.render(scene, camera);
 }
 
-function onWindowResize() {
+$effect(() => {
 	camera.aspect = clientWidth / clientHeight;
 	camera.updateProjectionMatrix();
 	renderer.setSize(clientWidth, clientHeight);
-}
+	renderer.render(scene, camera);
+})
 </script>
 
-<svelte:window onresize={onWindowResize}></svelte:window>
 <div
 	bind:clientHeight
 	bind:clientWidth

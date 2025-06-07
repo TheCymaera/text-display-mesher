@@ -2,8 +2,8 @@
 import NumberField from '../ui-components/NumberField.svelte';
 import * as THREE from 'three';
 import MeshViewer from './MeshViewer.svelte';
-import { debounce, loadImageAsCanvas } from '../utilities/misc';
-import { meshToTextDisplays, type TextDisplayEntity } from '../utilities/textDisplays';
+import { loadImageAsCanvas } from '../utilities/misc';
+import { meshToTextDisplays } from '../utilities/textDisplays';
 import { textDisplayTrianglesToMesh } from '../utilities/textDisplayRendering';
 import { textDisplaysToSummonCommands } from '../utilities/textDisplayCommands';
 import suzanneModelText from '../assets/suzanne/model.obj?raw';
@@ -16,8 +16,10 @@ import FileDropZone from '../ui-components/FileDropZone.svelte';
 import TextureField from './TextureField.svelte';
 import { shadowShader } from '../utilities/triangleShader';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
-import { untrack } from 'svelte';
 import { debouncedState } from '../utilities/svelteUtilities.svelte';
+import { fa5_solid_home, fa5_solid_info, fa5_brands_github } from 'fontawesome-svgs';
+import CircleButton from '../ui-components/CircleButton.svelte';
+import { githubRepositoryLink, homeLink } from './links';
 
 let meshView: "original" | "text" = $state("text");
 
@@ -26,7 +28,7 @@ let mesh: THREE.Group = $state.raw(new THREE.Group());
 let textureInput: THREE.Color | THREE.Texture = $state.raw(new THREE.Color(0xffffff));
 let emissionInput: THREE.Texture | undefined = $state.raw(undefined);
 let lightPosition = $state({ x: 1, y: 1, z: 1 })
-let minBrightness = $state(0.5);
+let minBrightness = $state(0.3);
 let maxBrightness = $state(1.0);
 
 const objMaterial = new THREE.MeshStandardMaterial();
@@ -35,9 +37,9 @@ const mountainrayMesh = createObjMesh(mountainrayModelText, objMaterial);
 const suzanneMesh = createObjMesh(suzanneModelText, objMaterial);
 const utahTeapotMesh = createObjMesh(utahTeapot, objMaterial);
 
-suzanneMesh.scale.set(0.5, 0.5, 0.5);
-utahTeapotMesh.scale.set(0.1, 0.1, 0.1);
-utahTeapotMesh.translateY(-0.4);
+suzanneMesh.applyMatrix4(new THREE.Matrix4().makeScale(0.5, 0.5, 0.5));
+utahTeapotMesh.applyMatrix4(new THREE.Matrix4().makeScale(0.3, 0.3, 0.3));
+utahTeapotMesh.applyMatrix4(new THREE.Matrix4().makeTranslation(0, -0.3, 0));
 
 const presetMeshes = [ mountainrayMesh, suzanneMesh, utahTeapotMesh ]
 
@@ -60,9 +62,8 @@ $effect(() => {
 		objMaterial.emissiveIntensity = 1;
 	}
 
-	untrack(()=>{
-		textDisplaysDebounced.invalidate();
-	})
+	objMaterial.needsUpdate = true
+	textDisplaysDebounced.invalidate();
 })
 
 const textDisplaysDebounced = debouncedState({
@@ -234,7 +235,7 @@ loadMountainray()
 			<p>Adding this many entities to your world can cause severe performance issues or even corrupt your save file. <strong>Always backup your world before using these commands.</strong></p>
 		</div>
 		
-		<div class="bg-sky-100 border border-sky-400 text-sky-700 px-4 py-3 rounded mb-3">
+		<div class="bg-cyan-100 border border-cyan-400 text-cyan-700 px-4 py-3 rounded mb-3">
 			<p>Commands are split into batches due to Minecraft's command length limits.</p>
 		</div>
 		
@@ -307,20 +308,54 @@ loadMountainray()
 			lightPosition={meshView === 'original' ? new THREE.Vector3(lightPosition.x, lightPosition.y, lightPosition.z).normalize() : undefined}
 		/>
 
-		<div class="absolute top-4 right-4 rounded-md shadow-md">
-			<Button 
-				variant={meshView === 'original' ? 'filled' : 'outlined'}
-				onPress={() => meshView = 'original'}
-				className="mr-2"
-			>
-				Original
-			</Button>
-			<Button 
-				variant={meshView === 'text' ? 'filled' : 'outlined'}
-				onPress={() => meshView = 'text'}
-			>
-				Text Display
-			</Button>
+		<div class="absolute top-3 right-3 flex items-center">
+			<div class="rounded-md shadow-md">
+				<Button 
+					variant={meshView === 'original' ? 'filled' : 'outlined'}
+					onPress={() => meshView = 'original'}
+					className="mr-2"
+				>
+					Original
+				</Button>
+				<Button 
+					variant={meshView === 'text' ? 'filled' : 'outlined'}
+					onPress={() => meshView = 'text'}
+				>
+					Text Display
+				</Button>
+			</div>
+		</div>
+
+
+
+		<div class="absolute bottom-3 right-3 flex flex-col gap-3">
+			<a href="{githubRepositoryLink}" target="_blank">
+				<CircleButton 
+					onPress={() => {}}
+					label="GitHub Repository"
+				>
+					{@html fa5_brands_github}
+				</CircleButton>
+			</a>
+
+			<a href="{homeLink}" target="_blank">
+				<CircleButton 
+					onPress={() => {}}
+					label="Home"
+				>
+					{@html fa5_solid_home}
+				</CircleButton>
+			</a>
+
+
+			<a href="#info">
+				<CircleButton 
+					onPress={() => {}}
+					label="Show Information"
+				>
+					{@html fa5_solid_info}
+				</CircleButton>
+			</a>
 		</div>
 	</div>
 </div>
