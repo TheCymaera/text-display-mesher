@@ -11,7 +11,7 @@ const textDisplayMesh = new THREE.Mesh(
 
 
 export function textDisplaysToMesh(textDisplays: TextDisplayEntity[]) {
-	using _ = benchmark("textDisplaysToMesh");
+	// using _ = benchmark("textDisplaysToMesh");
 
 	const group = new THREE.Group();
 

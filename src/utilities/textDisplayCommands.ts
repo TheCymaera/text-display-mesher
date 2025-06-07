@@ -7,7 +7,7 @@ export function textDisplaysToSummonCommands(textDisplays: TextDisplayEntity[], 
 	//maxPassengers = Infinity,
 	maxCommandLength = 32500,
 }= {}) {
-	using _ = benchmark("textDisplaysToSummonCommand");
+	// using _ = benchmark("textDisplaysToSummonCommand");
 
 	const commands: string[] = [];
 	const containerPosition = "~ ~ ~";

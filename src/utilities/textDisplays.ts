@@ -95,7 +95,7 @@ function textDisplayTriangle(
 }
 
 export function meshToTextDisplays(mesh: THREE.Mesh | THREE.Group, textureShaderWrapper: (baseShader: TriangleShader) => TriangleShader): TextDisplayEntity[] {
-	using _ = benchmark("meshToTextDisplays");
+	// using _ = benchmark("meshToTextDisplays");
 
 	const triangulated = mesh instanceof THREE.Mesh ? getTrianglesFromMesh(mesh) : getTrianglesFromGroup(mesh);
 
