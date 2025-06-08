@@ -196,7 +196,7 @@ const cameraMaxDistance = $derived.by(() => {
 		<MeshViewer 
 			model={meshView === 'original' ? mesh : textDisplayTrianglesToMesh(textDisplays)}
 			maxDistance={cameraMaxDistance}
-			lightPosition={meshView === 'original' ? new THREE.Vector3(lightPosition.x, lightPosition.y, lightPosition.z).normalize() : undefined}
+			lightPosition={new THREE.Vector3(lightPosition.x, lightPosition.y, lightPosition.z).normalize()}
 		/>
 
 		<div class="absolute top-3 right-3 flex items-center">

@@ -6,7 +6,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 let { model, maxDistance, lightPosition }: {
 	model: THREE.Object3D;
 	maxDistance: number;
-	lightPosition: THREE.Vector3 | undefined;
+	lightPosition: THREE.Vector3;
 } = $props();
 
 let canvas: HTMLCanvasElement;
@@ -24,14 +24,12 @@ const sceneObjects = $derived.by(()=>{
 	group.add(model);
 
 
-	if (lightPosition) {
-		const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
-		directionalLight.position.set(lightPosition.x, lightPosition.y, lightPosition.z);
-		group.add(directionalLight);
-	}
+	const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
+	directionalLight.position.set(lightPosition.x, lightPosition.y, lightPosition.z);
+	group.add(directionalLight);
 
 
-	const ambientLight = new THREE.AmbientLight(0xffffff, lightPosition ? 0.3 : 1);
+	const ambientLight = new THREE.AmbientLight(0xffffff, 1);
 	group.add(ambientLight);
 
 	return group;
