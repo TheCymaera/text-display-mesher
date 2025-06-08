@@ -1,7 +1,14 @@
 <script lang="ts" module>
 	import mountainrayModelURL from '../assets/mountainray/model.glb?url';
+	import suzanneModelText from '../assets/suzanne/model.obj?raw';
+	import utahTeapot from '../assets/utah-teapot/model.obj?raw';
 
 	const mountainrayMesh = fixGLTFMesh((await new GLTFLoader().loadAsync(mountainrayModelURL)).scene);
+	const suzanneMesh = createObjMesh(suzanneModelText, new THREE.MeshStandardMaterial());
+	const utahTeapotMesh = createObjMesh(utahTeapot, new THREE.MeshStandardMaterial());
+	suzanneMesh.applyMatrix4(new THREE.Matrix4().makeScale(0.5, 0.5, 0.5));
+	utahTeapotMesh.applyMatrix4(new THREE.Matrix4().makeScale(0.3, 0.3, 0.3));
+	utahTeapotMesh.applyMatrix4(new THREE.Matrix4().makeTranslation(0, -0.3, 0));
 
 	function fixGLTFMesh(mesh: THREE.Group): THREE.Group {
 		mesh.traverse((child) => {
@@ -19,48 +26,42 @@
 		});
 		return mesh;
 	}
-
+	
+	function createObjMesh(objText: string, material: THREE.Material): THREE.Group {
+		const mesh = new OBJLoader().parse(objText);
+		mesh.traverse((child) => {
+			if (child instanceof THREE.Mesh) {
+				child.material = material;
+			}
+		});
+		return mesh;
+	}
 </script>
 <script lang="ts">
 	import * as THREE from 'three';
 	import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 	import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 	import Button from '../ui-components/Button.svelte';
-	import FileDropZone from '../ui-components/FileDropZone.svelte';
+	import FileField from '../ui-components/FileField.svelte';
 	import TextureField from './TextureField.svelte';
 	import { loadImageAsCanvas } from '../utilities/misc';
 	
-	// Import preset models
-	import suzanneModelText from '../assets/suzanne/model.obj?raw';
-	import utahTeapot from '../assets/utah-teapot/model.obj?raw';
-	
 	// Props
 	let { mesh = $bindable(), onUpdateMaterial }: { mesh: THREE.Group, onUpdateMaterial: ()=>void } = $props();
+
+	mesh = mountainrayMesh;
 	
 	let textureInput: THREE.Color | THREE.Texture = $state(new THREE.Color(0xffffff));
 	let emissionInput: THREE.Texture | undefined = $state(undefined);
 	
-	// Tabs
 	type Tab = 'obj' | 'gltf' | 'presets';
 	let activeTab: Tab = $state('presets');
 	
-	// Create a material for OBJ models
 	const objMaterial = new THREE.MeshStandardMaterial();
 	
-	// Create preset materials to avoid linking with objMaterial
-	//const mountainrayMaterial = new THREE.MeshStandardMaterial();
-	const suzanneMaterial = new THREE.MeshStandardMaterial();
-	const teapotMaterial = new THREE.MeshStandardMaterial();
-	
-	// Create preset meshes with their own materials
-	//const mountainrayMesh = createObjMesh(mountainrayModelText, mountainrayMaterial);
-	const suzanneMesh = createObjMesh(suzanneModelText, suzanneMaterial);
-	const utahTeapotMesh = createObjMesh(utahTeapot, teapotMaterial);
-	
-	// Apply transformations to preset meshes
-	suzanneMesh.applyMatrix4(new THREE.Matrix4().makeScale(0.5, 0.5, 0.5));
-	utahTeapotMesh.applyMatrix4(new THREE.Matrix4().makeScale(0.3, 0.3, 0.3));
-	utahTeapotMesh.applyMatrix4(new THREE.Matrix4().makeTranslation(0, -0.3, 0));
+	let modelFile: File | null = $state(null);
+	let textureFiles: File[] = $state([]);
+	let loadingError: { message: string, details: string, hint: string } | null = $state(null);
 	
 	const presetMeshes = [mountainrayMesh, suzanneMesh, utahTeapotMesh];
 	
@@ -87,39 +88,36 @@
 		objMaterial.needsUpdate = true;
 		onUpdateMaterial();
 	});
-	
-	function createObjMesh(objText: string, material: THREE.Material): THREE.Group {
-		const mesh = new OBJLoader().parse(objText);
-		mesh.traverse((child) => {
-			if (child instanceof THREE.Mesh) {
-				child.material = material;
+
+	async function loadGLTF() {
+		if (!modelFile) return;
+		
+		const contents = await modelFile.arrayBuffer()
+		
+			
+		const textureMap = new Map<string, string>();
+		for (const file of textureFiles) {
+			const url = URL.createObjectURL(file);
+			textureMap.set(file.name, url);
+		}
+
+		const loadManager = new THREE.LoadingManager();
+		loadManager.setURLModifier((url) => {
+			const filename = url.split('/').pop()!;
+			return textureMap.get(filename) ?? url
+		});
+		const loader = new GLTFLoader(loadManager);
+
+
+		const loaded = await loader.parseAsync(contents, '').finally(() => {
+			// Clean up URLs after loading
+			for (const url of textureMap.values()) {
+				URL.revokeObjectURL(url);
 			}
 		});
-		return mesh;
+
+		mesh = fixGLTFMesh(loaded.scene)
 	}
-	
-	//(async () => {
-	//	mountainrayMaterial.map = new THREE.CanvasTexture(await loadImageAsCanvas(mountainrayTexture));
-	//	mountainrayMaterial.emissiveMap = new THREE.CanvasTexture(await loadImageAsCanvas(mountainrayEmission));
-	//	mountainrayMaterial.emissive = new THREE.Color(0xffffff);
-	//	mountainrayMaterial.emissiveIntensity = 1;
-	//	mountainrayMaterial.needsUpdate = true;
-	//})();
-
-	suzanneMaterial.color = new THREE.Color(0xffffff);
-	suzanneMaterial.map = null;
-	suzanneMaterial.emissiveMap = null;
-	suzanneMaterial.emissive = new THREE.Color(0x000000);
-	suzanneMaterial.emissiveIntensity = 0;
-
-	teapotMaterial.color = new THREE.Color(0xffffff);
-	teapotMaterial.map = null;
-	teapotMaterial.emissiveMap = null;
-	teapotMaterial.emissive = new THREE.Color(0x000000);
-	teapotMaterial.emissiveIntensity = 0;
-	
-	// Initialize with mountainray
-	mesh = mountainrayMesh;
 </script>
 
 <div>
@@ -172,36 +170,81 @@
 
 {#snippet gltfTab()}
 	<div class="space-y-6">
-		<FileDropZone 
+		<FileField 
 			label="GLTF/GLB Model File"
 			accept=".gltf,.glb"
-			onChange={async file => {
-				if (file) {
-					const contents = file.name.endsWith('.glb') ? 
-							await file.arrayBuffer() : 
-							await file.text();
+			onChange={async files => {
+				const file = files[0];
+				if (!file) return;
+				
+				modelFile = file;
+				loadingError = null;
 
-					try {
-						mesh = fixGLTFMesh((await new GLTFLoader().parseAsync(contents, '')).scene);
-					} catch (error) {
-						console.error('Failed to load GLTF model:', error);
-						alert('Failed to load GLTF model. Check console for details.');
-					}
+				try {
+					await loadGLTF();
+				} catch (error) {
+					console.error('Failed to load GLTF model:', error);
+					loadingError = {
+						message: 'Failed to load GLTF model',
+						details: error instanceof Error ? error.message : String(error),
+						hint: file.name.endsWith('.gltf') ? 
+							'Your GLTF file might reference external textures. Please upload them above.' :
+							'There was a problem with your model file. Check the format and try again.'
+					};
 				}
 			}}
 		/>
+		
+		{#if modelFile && modelFile.name.endsWith('.gltf')}
+			<div class="mt-4">
+				<FileField 
+					label="Texture Files (for GLTF)"
+					accept="image/*"
+					className="mb-3"
+					multiple={true}
+					onChange={async files => {
+						textureFiles = [...files];
+						
+						try {
+							await loadGLTF();
+							loadingError = null;
+						} catch (error) {
+							console.error('Failed to load GLTF model with textures:', error);
+							loadingError = {
+								message: 'Failed to load GLTF model with textures',
+								details: error instanceof Error ? error.message : String(error),
+								hint: 'Make sure all referenced texture files are included. Check the console for details.'
+							};
+						}
+					}}
+				/>
+			</div>
+		{/if}
+		
+		{#if loadingError}
+			<div class="p-3 bg-error-100 border border-error-300 rounded-md text-error-700">
+				<div class="font-medium">{loadingError.message}</div>
+				<div class="text-sm mt-1">{loadingError.hint}</div>
+				<div class="text-xs mt-2 font-mono bg-black/5 p-2 rounded">{loadingError.details}</div>
+			</div>
+		{/if}
+		
 		<div class="text-sm opacity-70">
-			GLTF/GLTB file support is experimental.
+			GLTF/GLB file support is experimental. GLB files contain all needed textures, while GLTF files may require additional texture files.
 		</div>
 	</div>
 {/snippet}
 
 {#snippet objTab()}
 	<div class="space-y-6">
-		<FileDropZone 
+		<FileField 
 			label="OBJ Model File"
 			accept=".obj"
-			onChange={async file => {
+			onChange={async files => {
+				const file = files[0];
+				if (!file) return;
+
+
 				if (presetMeshes.includes(mesh)) {
 					textureInput = new THREE.Color(0xffffff);
 					emissionInput = undefined;
@@ -216,9 +259,11 @@
 			bind:value={textureInput}
 		/>
 		
-		<FileDropZone 
+		<FileField 
 			accept="image/*"
-			onChange={async file => {
+			onChange={async files => {
+				const file = files[0];
+
 				if (file) {
 					emissionInput = new THREE.CanvasTexture(await loadImageAsCanvas(file));
 				} else {
@@ -229,6 +274,6 @@
 			{#snippet label()}
 				Emission Map <small class="opacity/70">(Optional)</small>
 			{/snippet}
-		</FileDropZone>
+		</FileField>
 	</div>
 {/snippet}

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import * as THREE from 'three';
 	import Button from '../ui-components/Button.svelte';
-	import FileField from '../ui-components/FileDropZone.svelte';
+	import FileField from '../ui-components/FileField.svelte';
 	import ColorField from '../ui-components/ColorField.svelte';
 	import { untrack } from 'svelte';
 	import { createNoiseImage, flatColorCanvas, loadImageAsCanvas } from '../utilities/misc';
@@ -102,7 +102,10 @@
 		<FileField 
 			label=""
 			accept="image/*"
-			onChange={async (file)=> {
+			onChange={async (files)=> {
+				const file = files[0];
+				if (!file) return;
+				
 				value = new THREE.CanvasTexture(await loadImageAsCanvas(file));
 				onChange(value);
 			}}
