@@ -98,12 +98,12 @@
 		const textureMap = new Map<string, string>();
 		for (const file of textureFiles) {
 			const url = URL.createObjectURL(file);
-			textureMap.set(file.name, url);
+			textureMap.set(file.name.toLowerCase(), url);
 		}
 
 		const loadManager = new THREE.LoadingManager();
 		loadManager.setURLModifier((url) => {
-			const filename = url.split('/').pop()!;
+			const filename = url.split('/').pop()!.toLowerCase();
 			return textureMap.get(filename) ?? url
 		});
 		const loader = new GLTFLoader(loadManager);
@@ -198,8 +198,8 @@
 		{#if modelFile && modelFile.name.endsWith('.gltf')}
 			<div class="mt-4">
 				<FileField 
-					label="Texture Files (for GLTF)"
-					accept="image/*"
+					label="GLTF Assets"
+					accept="image/*,,.bin"
 					className="mb-3"
 					multiple={true}
 					onChange={async files => {
@@ -209,11 +209,11 @@
 							await loadGLTF();
 							loadingError = null;
 						} catch (error) {
-							console.error('Failed to load GLTF model with textures:', error);
+							console.error('Failed to load GLTF model with assets:', error);
 							loadingError = {
-								message: 'Failed to load GLTF model with textures',
+								message: 'Failed to load GLTF model with assets',
 								details: error instanceof Error ? error.message : String(error),
-								hint: 'Make sure all referenced texture files are included. Check the console for details.'
+								hint: 'Make sure all referenced assets are included.'
 							};
 						}
 					}}
