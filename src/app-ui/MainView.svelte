@@ -17,7 +17,7 @@ let meshView: "original" | "text" = $state("text");
 // Inputs
 let mesh: THREE.Object3D = $state.raw(new THREE.Object3D());
 let lightPosition = $state({ x: 1, y: 1, z: 1 })
-let minBrightness = $state(0.5);
+let minBrightness = $state(0.4);
 let maxBrightness = $state(1.0);
 
 const textDisplaysDebounced = debouncedState({
