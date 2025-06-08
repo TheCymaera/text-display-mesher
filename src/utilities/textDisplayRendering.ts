@@ -35,7 +35,7 @@ const simplifiedUnitTriangleMesh = new THREE.Mesh(
 );
 
 /**
- * Generates a more optimized mesh
+ * Generates a more optimized mesh for text displays arranged in triangles.
  * @param textDisplays - Text displays arranged in groups of three, each representing a triangle.
  */
 export function textDisplayTrianglesToMesh(textDisplays: TextDisplayEntity[]) {

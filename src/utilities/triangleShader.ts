@@ -1,6 +1,6 @@
 import * as THREE from "three"
 import { Random } from "./misc"
-import type { MeshTriangle } from "./getPolygonsFromMesh"
+import type { MeshTriangle } from "./getTrianglesFromMesh"
 
 type UVColorProvider = (u: number, v: number) => THREE.Color
 export type TriangleShader = (triangle: MeshTriangle) => THREE.Color

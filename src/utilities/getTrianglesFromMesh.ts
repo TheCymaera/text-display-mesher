@@ -12,36 +12,28 @@ export class MeshTriangle {
 		public second: MeshVertex,
 		public third: MeshVertex
 	) {}
-
-	forEach(callback: (vertex: MeshVertex) => void): void {
-		callback(this.first);
-		callback(this.second);
-		callback(this.third);
-	}
 }
 
 
-export function getTrianglesFromGroup(group: THREE.Group): MeshTriangle[] {
-	const polygons: MeshTriangle[] = [];
-	
-	// Iterate through each child in the group
-	group.children.forEach(child => {
-		if (child instanceof THREE.Mesh) {
-			const meshPolygons = getPolygonsFromMesh(child);
-			polygons.push(...meshPolygons);
-		} else if (child instanceof THREE.Group) {
-			const groupPolygons = getTrianglesFromGroup(child);
-			polygons.push(...groupPolygons);
-		}
+export function getTrianglesFromObject(object: THREE.Object3D): MeshTriangle[] {
+	const triangles: MeshTriangle[] = [];
+
+	object.children.forEach(child => {
+		triangles.push(...getTrianglesFromObject(child));
 	});
-
-	applyTransformations(polygons, group);
 	
-	return polygons;
+	if (object instanceof THREE.Mesh) {
+		triangles.push(...getTrianglesFromMesh(object));
+	}
+
+	applyTransformations(triangles, object);
+
+	
+	return triangles;
 }
 
-export function getPolygonsFromMesh(mesh: THREE.Mesh): MeshTriangle[] {
-	const polygons: MeshTriangle[] = [];
+function getTrianglesFromMesh(mesh: THREE.Mesh): MeshTriangle[] {
+	const triangles: MeshTriangle[] = [];
 	const geometry = mesh.geometry;
 	
 	if (!(geometry instanceof THREE.BufferGeometry)) {
@@ -60,7 +52,7 @@ export function getPolygonsFromMesh(mesh: THREE.Mesh): MeshTriangle[] {
 	
 	const indices = geometry.getIndex()?.array ?? Array.from({ length: positionAttribute.count }, (_, i) => i);
 	
-	// Process triangles (assuming the geometry consists of triangles)
+	// Process triangles
 	for (let i = 0; i < indices.length; i += 3) {
 		const firstIndex = indices[i]!;
 		const secondIndex = indices[i + 1]!;
@@ -68,16 +60,14 @@ export function getPolygonsFromMesh(mesh: THREE.Mesh): MeshTriangle[] {
 
 		const material = mesh.material instanceof Array ? mesh.material[0]! : mesh.material;
 
-		polygons.push(new MeshTriangle(
+		triangles.push(new MeshTriangle(
 			getMeshVertex(positionAttribute, uvAttribute, firstIndex, material),
 			getMeshVertex(positionAttribute, uvAttribute, secondIndex, material),
 			getMeshVertex(positionAttribute, uvAttribute, thirdIndex, material),
 		));
 	}
 	
-	applyTransformations(polygons, mesh);
-	
-	return polygons;
+	return triangles;
 }
 
 function getMeshVertex(
@@ -106,15 +96,12 @@ function getVec3(attribute: THREE.BufferAttribute, index: number): THREE.Vector3
 }
 
 
-function applyTransformations(
-	polygons: MeshTriangle[],
-	meshOrGroup: THREE.Mesh | THREE.Group
-) {
-	polygons.forEach(polygon => {
-		polygon.forEach(vertex => {
-			vertex.position.applyMatrix4(meshOrGroup.matrix);
-		});
-	});
+function applyTransformations(triangles: MeshTriangle[], object: THREE.Object3D) {
+	for (const triangle of triangles) {
+		triangle.first.position.applyMatrix4(object.matrix);
+		triangle.second.position.applyMatrix4(object.matrix);
+		triangle.third.position.applyMatrix4(object.matrix);
+	}
 	
-	return polygons;
+	return triangles;
 }

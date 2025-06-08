@@ -3,13 +3,14 @@ import { onMount } from 'svelte';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
-let { modelData, lightPosition }: {
-	modelData: THREE.Group;
+let { model, maxDistance, lightPosition }: {
+	model: THREE.Object3D;
+	maxDistance: number;
 	lightPosition: THREE.Vector3 | undefined;
 } = $props();
 
 let canvas: HTMLCanvasElement;
-let scene = $state() as THREE.Scene;
+const scene = new THREE.Scene();
 let camera: THREE.PerspectiveCamera;
 let renderer: THREE.WebGLRenderer;
 let controls: OrbitControls;
@@ -20,7 +21,7 @@ let clientWidth = $state(1);
 
 const sceneObjects = $derived.by(()=>{
 	const group = new THREE.Group();
-	group.add(modelData);
+	group.add(model);
 
 
 	if (lightPosition) {
@@ -49,10 +50,7 @@ onMount(() => {
 });
 
 function initScene() {
-	// Create scene
-	scene = new THREE.Scene();
-
-	// Add helpers, grid, and axes
+	// Helpers
 	const gridHelper = new THREE.GridHelper(10, 10);
 	gridHelper.position.y = -0.001;
 	scene.add(gridHelper);
@@ -61,19 +59,19 @@ function initScene() {
 	axesHelper.position.set(0, 0.001, 0);
 	scene.add(axesHelper);
 
-	// Create camera
+	// Camera
 	camera = new THREE.PerspectiveCamera(75, clientWidth / clientHeight, 0.1, 1000);
 	camera.position.z = 5;
 	camera.position.x = 4;
 	camera.position.y = 3;
 	camera.position.normalize().multiplyScalar(10);
 
-	// Create renderer
+	// Renderer
 	renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 	renderer.setPixelRatio(window.devicePixelRatio);
 	renderer.setSize(clientWidth, clientHeight);
 
-	// Add orbit controls
+	//Orbit controls
 	controls = new OrbitControls(camera, renderer.domElement);
 	controls.enableDamping = true;
 	controls.dampingFactor = 0.05;
@@ -89,6 +87,8 @@ $effect(() => {
 	
 	currentGroup = sceneObjects;
 	scene.add(sceneObjects);
+	
+	controls.maxDistance = maxDistance;
 });
 
 function animate() {

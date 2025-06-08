@@ -15,12 +15,10 @@ import ModelSelector from './ModelSelector.svelte';
 let meshView: "original" | "text" = $state("text");
 
 // Inputs
-let mesh: THREE.Group = $state.raw(new THREE.Group());
+let mesh: THREE.Object3D = $state.raw(new THREE.Object3D());
 let lightPosition = $state({ x: 1, y: 1, z: 1 })
 let minBrightness = $state(0.3);
 let maxBrightness = $state(1.0);
-
-$effect(() => {console.log("Mesh changed", mesh); });
 
 const textDisplaysDebounced = debouncedState({
 	delay: 150, 
@@ -49,17 +47,37 @@ function changeButtonText(event: MouseEvent, text: string) {
 	button.textContent = text;
 	setTimeout(() => button.textContent = originalText, 2000);
 }
+
+console.group("For debugging, use these variables.");
+console.log("mesh");
+console.log("textDisplays");
+console.log("summonCommands");
+console.groupEnd();
+$effect(()=>{
+	Object.assign(globalThis, {
+		mesh,
+		textDisplays,
+		summonCommands,
+	})
+});
+
+const cameraMaxDistance = $derived.by(() => {
+	const boundingBox = new THREE.Box3().setFromObject(mesh);
+	const modelSize = boundingBox.getSize(new THREE.Vector3());
+	const maxDimension = Math.max(modelSize.x, modelSize.y, modelSize.z) || 0;
+	return Math.max(maxDimension * 1.1, 10);
+});
 </script>
 
-<div class="grid grid-cols-[25em_1fr]">
+<div class="
+	md:grid md:grid-cols-[25em_1fr]
+	flex flex-col-reverse [&>*]:flex-1
+">
 	<!-- Sidebar -->
 	<div class="bg-surfaceContainer text-onSurfaceContainer p-4 overflow-y-auto">
-		<!-- Model Selector Component -->
 		<ModelSelector
 			bind:mesh={mesh}
-			onUpdateMaterial={() => {
-				textDisplaysDebounced.invalidate();
-			}}
+			onUpdateMaterial={() => textDisplaysDebounced.invalidate()}
 		/>
 
 		<br>
@@ -176,26 +194,25 @@ function changeButtonText(event: MouseEvent, text: string) {
 	<!-- Model Viewer -->
 	<div class="relative">
 		<MeshViewer 
-			modelData={meshView === 'original' ? mesh : textDisplayTrianglesToMesh(textDisplays)}
+			model={meshView === 'original' ? mesh : textDisplayTrianglesToMesh(textDisplays)}
+			maxDistance={cameraMaxDistance}
 			lightPosition={meshView === 'original' ? new THREE.Vector3(lightPosition.x, lightPosition.y, lightPosition.z).normalize() : undefined}
 		/>
 
 		<div class="absolute top-3 right-3 flex items-center">
-			<div class="rounded-md shadow-md">
-				<Button 
-					variant={meshView === 'original' ? 'filled' : 'outlined'}
-					onPress={() => meshView = 'original'}
-					className="mr-2"
-				>
-					Original
-				</Button>
-				<Button 
-					variant={meshView === 'text' ? 'filled' : 'outlined'}
-					onPress={() => meshView = 'text'}
-				>
-					Text Display
-				</Button>
-			</div>
+			<Button 
+				variant={meshView === 'original' ? 'filled' : 'outlined'}
+				onPress={() => meshView = 'original'}
+				className="mr-2"
+			>
+				Original
+			</Button>
+			<Button 
+				variant={meshView === 'text' ? 'filled' : 'outlined'}
+				onPress={() => meshView = 'text'}
+			>
+				Text Display
+			</Button>
 		</div>
 
 		<div class="absolute bottom-3 right-3 flex flex-col gap-3">

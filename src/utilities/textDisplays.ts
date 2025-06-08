@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { lookAlongQuaternion, shearMatrix, translationMatrix } from './maths';
 import { threeJSEmissiveShader, threeJSTextureShader, type TriangleShader } from './triangleShader';
 import { benchmark, deepFreeze } from './misc';
-import { getTrianglesFromGroup, getPolygonsFromMesh as getTrianglesFromMesh } from './getPolygonsFromMesh';
+import { getTrianglesFromObject } from './getTrianglesFromMesh';
 
 export interface TextDisplayBrightness {
 	sky: number;
@@ -95,12 +95,12 @@ function textDisplayTriangle(
 }
 
 export function meshToTextDisplays(
-	mesh: THREE.Mesh | THREE.Group,
+	mesh: THREE.Object3D,
 	shadowProvider: (color: THREE.Color, normal: THREE.Vector3, emission: number) => THREE.Color,
 ): TextDisplayEntity[] {
 	// using _ = benchmark("meshToTextDisplays");
 
-	const triangulated = mesh instanceof THREE.Mesh ? getTrianglesFromMesh(mesh) : getTrianglesFromGroup(mesh);
+	const triangulated = getTrianglesFromObject(mesh);
 
 	// Convert materials to shaders
 	const materialsToShaders = new Map<THREE.Material, { texture: TriangleShader, emissive: TriangleShader }>();

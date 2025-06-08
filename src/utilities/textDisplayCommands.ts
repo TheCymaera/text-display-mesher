@@ -82,13 +82,11 @@ function textDisplayNBT(textDisplay: TextDisplayEntity) {
 }
 
 function colorToSignedInt(color: THREE.Color, alpha: number = 1): number {
-	// Convert color components from 0-1 to 0-255
 	const r = Math.round(color.r * 255);
 	const g = Math.round(color.g * 255);
 	const b = Math.round(color.b * 255);
 	const a = Math.round(alpha * 255);
 
-	// Combine into a 32-bit unsigned int (ARGB format: 0xAARRGGBB)
 	const unsignedInt = (a << 24) | (r << 16) | (g << 8) | b;
 
 	// Convert to signed 32-bit int (two's complement)

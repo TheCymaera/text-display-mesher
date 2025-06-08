@@ -3,14 +3,16 @@
 	import suzanneModelText from '../assets/suzanne/model.obj?raw';
 	import utahTeapot from '../assets/utah-teapot/model.obj?raw';
 
-	const mountainrayMesh = fixGLTFMesh((await new GLTFLoader().loadAsync(mountainrayModelURL)).scene);
+	const mountainrayMesh = fixGLTFMaterials((await new GLTFLoader().loadAsync(mountainrayModelURL)).scene);
 	const suzanneMesh = createObjMesh(suzanneModelText, new THREE.MeshStandardMaterial());
 	const utahTeapotMesh = createObjMesh(utahTeapot, new THREE.MeshStandardMaterial());
 	suzanneMesh.applyMatrix4(new THREE.Matrix4().makeScale(0.5, 0.5, 0.5));
 	utahTeapotMesh.applyMatrix4(new THREE.Matrix4().makeScale(0.3, 0.3, 0.3));
-	utahTeapotMesh.applyMatrix4(new THREE.Matrix4().makeTranslation(0, -0.3, 0));
+	//utahTeapotMesh.applyMatrix4(new THREE.Matrix4().makeTranslation(0, -1, 0));
 
-	function fixGLTFMesh(mesh: THREE.Group): THREE.Group {
+	function fixGLTFMaterials(mesh: THREE.Object3D) {
+		// Recreate materials.
+		// https://discourse.threejs.org/t/textured-objects-invisible-after-importing-as-gltf-from-blender/58277
 		mesh.traverse((child) => {
 			if (!(child instanceof THREE.Mesh)) return;
 
@@ -27,7 +29,7 @@
 		return mesh;
 	}
 	
-	function createObjMesh(objText: string, material: THREE.Material): THREE.Group {
+	function createObjMesh(objText: string, material: THREE.Material) {
 		const mesh = new OBJLoader().parse(objText);
 		mesh.traverse((child) => {
 			if (child instanceof THREE.Mesh) {
@@ -46,8 +48,7 @@
 	import TextureField from './TextureField.svelte';
 	import { loadImageAsCanvas } from '../utilities/misc';
 	
-	// Props
-	let { mesh = $bindable(), onUpdateMaterial }: { mesh: THREE.Group, onUpdateMaterial: ()=>void } = $props();
+	let { mesh = $bindable(), onUpdateMaterial }: { mesh: THREE.Object3D, onUpdateMaterial: ()=>void } = $props();
 
 	mesh = mountainrayMesh;
 	
@@ -57,7 +58,7 @@
 	type Tab = 'obj' | 'gltf' | 'presets';
 	let activeTab: Tab = $state('presets');
 	
-	const objMaterial = new THREE.MeshStandardMaterial();
+	const objFileMaterial = new THREE.MeshStandardMaterial();
 	
 	let modelFile: File | null = $state(null);
 	let textureFiles: File[] = $state([]);
@@ -67,25 +68,25 @@
 	
 	// Update the objMaterial when texture or emission changes
 	$effect(() => {
-		objMaterial.color = new THREE.Color(0xffffff);
-		objMaterial.map = null;
-		objMaterial.emissiveMap = null;
-		objMaterial.emissive = new THREE.Color(0x000000);
-		objMaterial.emissiveIntensity = 0;
+		objFileMaterial.color = new THREE.Color(0xffffff);
+		objFileMaterial.map = null;
+		objFileMaterial.emissiveMap = null;
+		objFileMaterial.emissive = new THREE.Color(0x000000);
+		objFileMaterial.emissiveIntensity = 0;
 		
 		if (textureInput instanceof THREE.Color) {
-			objMaterial.color = textureInput;
+			objFileMaterial.color = textureInput;
 		} else {
-			objMaterial.map = textureInput;
+			objFileMaterial.map = textureInput;
 		}
 		
 		if (emissionInput) {
-			objMaterial.emissiveMap = emissionInput;
-			objMaterial.emissive = new THREE.Color(0xffffff);
-			objMaterial.emissiveIntensity = 1;
+			objFileMaterial.emissiveMap = emissionInput;
+			objFileMaterial.emissive = new THREE.Color(0xffffff);
+			objFileMaterial.emissiveIntensity = 1;
 		}
 		
-		objMaterial.needsUpdate = true;
+		objFileMaterial.needsUpdate = true;
 		onUpdateMaterial();
 	});
 
@@ -110,13 +111,13 @@
 
 
 		const loaded = await loader.parseAsync(contents, '').finally(() => {
-			// Clean up URLs after loading
+			// Clean up
 			for (const url of textureMap.values()) {
 				URL.revokeObjectURL(url);
 			}
 		});
 
-		mesh = fixGLTFMesh(loaded.scene)
+		mesh = fixGLTFMaterials(loaded.scene)
 	}
 </script>
 
@@ -250,7 +251,7 @@
 					emissionInput = undefined;
 				}
 				
-				mesh = createObjMesh(await file?.text() ?? "", objMaterial)
+				mesh = createObjMesh(await file?.text() ?? "", objFileMaterial)
 			}}
 		/>
 		
