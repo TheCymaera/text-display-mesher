@@ -94,7 +94,10 @@ function textDisplayTriangle(
 	};
 }
 
-export function meshToTextDisplays(mesh: THREE.Mesh | THREE.Group, textureShaderWrapper: (baseShader: TriangleShader) => TriangleShader): TextDisplayEntity[] {
+export function meshToTextDisplays(
+	mesh: THREE.Mesh | THREE.Group,
+	shadowProvider: (color: THREE.Color, normal: THREE.Vector3, emission: number) => THREE.Color,
+): TextDisplayEntity[] {
 	// using _ = benchmark("meshToTextDisplays");
 
 	const triangulated = mesh instanceof THREE.Mesh ? getTrianglesFromMesh(mesh) : getTrianglesFromGroup(mesh);
@@ -104,7 +107,7 @@ export function meshToTextDisplays(mesh: THREE.Mesh | THREE.Group, textureShader
 	for (const triangle of triangulated) {
 		const material = triangle.first.material;
 		if (!materialsToShaders.has(material)) {
-			const textureShader = textureShaderWrapper(threeJSTextureShader(material));
+			const textureShader = threeJSTextureShader(material);
 			const emissiveShader = threeJSEmissiveShader(material);
 			materialsToShaders.set(material, { texture: textureShader, emissive: emissiveShader });
 		}
@@ -121,9 +124,12 @@ export function meshToTextDisplays(mesh: THREE.Mesh | THREE.Group, textureShader
 		const material = triangle.first.material;
 		const shaders = materialsToShaders.get(material)!;
 		
-		const color = shaders.texture(triangle, normal);
-		const emissiveColor = shaders.emissive(triangle, normal);
+		const emissiveColor = shaders.emissive(triangle);
 		const emission = emissiveColor.r + emissiveColor.g + emissiveColor.b / 3;
+		
+		
+		const color = shadowProvider(shaders.texture(triangle), normal, emission)
+		
 		const brightness = {
 			sky: 15,
 			block: Math.round(emission * 15),
@@ -131,4 +137,24 @@ export function meshToTextDisplays(mesh: THREE.Mesh | THREE.Group, textureShader
 
 		return textDisplay.transforms.map(transform => ({ color, transform, brightness }));
 	});
+}
+
+export function createShadowProvider({ light, minBrightness, maxBrightness }: {
+	light: THREE.Vector3,
+	minBrightness: number,
+	maxBrightness: number,
+}) {
+	return function shadowProvider(color: THREE.Color, normal: THREE.Vector3, emission: number): THREE.Color {
+		const lightDot = normal.dot(light)
+		const brightness = (lightDot + 1) / 2 * (maxBrightness - minBrightness) + minBrightness
+
+
+		const brightnessAfterEmission = Math.min(1, brightness + emission);
+
+		return new THREE.Color(
+			color.r * brightnessAfterEmission,
+			color.g * brightnessAfterEmission,
+			color.b * brightnessAfterEmission
+		);
+	}
 }

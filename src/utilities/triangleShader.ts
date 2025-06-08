@@ -3,55 +3,50 @@ import { Random } from "./misc"
 import type { MeshTriangle } from "./getPolygonsFromMesh"
 
 type UVColorProvider = (u: number, v: number) => THREE.Color
-export type TriangleShader = (triangle: MeshTriangle, normal: THREE.Vector3) => THREE.Color
+export type TriangleShader = (triangle: MeshTriangle) => THREE.Color
 
 export function uvSamplerShader(colorProvider: UVColorProvider): TriangleShader {
 	return (triangle: MeshTriangle) => sampleTriangle(colorProvider, triangle)
 }
 
-export function canvasSamplerShader(canvas: HTMLCanvasElement): TriangleShader {
+export function canvasSamplerShader(canvas: HTMLCanvasElement, flipY = true) {
 	const context = canvas.getContext("2d", { willReadFrequently: true })!
-	return uvSamplerShader((u, v) => sampleCanvasColor(context, u, v));
+
+	if (flipY) {
+		return uvSamplerShader((u, v) => sampleCanvasColor(context, u, v));
+	}
+
+	return uvSamplerShader((u, v) => sampleCanvasColor(context, u, 1 - v));
 }
 
 export function threeJSTextureShader(material: THREE.Material): TriangleShader {
-	if (material instanceof THREE.MeshBasicMaterial || material instanceof THREE.MeshStandardMaterial) {
-		if (material.map) {
-			return canvasSamplerShader(toCanvas(material.map.image));
-		}
+	if ('map' in material && material.map instanceof THREE.Texture) {
+		return canvasSamplerShader(toCanvas(material.map.image), material.map.flipY);
+	}
 
+	if ('color' in material && material.color instanceof THREE.Color) {
 		return flatColorShader(material.color);
 	}
 
-	return flatColorShader(new THREE.Color(0xff0000));
+	return RANDOM_COLOR_SHADER;
 }
 
 export function threeJSEmissiveShader(material: THREE.Material): TriangleShader {
-	if (material instanceof THREE.MeshStandardMaterial) {
-		if (material.emissiveMap) {
-			return canvasSamplerShader(toCanvas(material.emissiveMap.image));
+	if ('emissiveMap' in material && material.emissiveMap instanceof THREE.Texture &&
+		'emissive' in material && material.emissive instanceof THREE.Color) {
+		const canvas = canvasSamplerShader(toCanvas(material.emissiveMap.image), material.emissiveMap.flipY);
+		const emissiveColor = material.emissive;
+		
+		return (triangle: MeshTriangle) => {
+			const color = canvas(triangle);
+			return color.multiply(emissiveColor);
 		}
+	}
+
+	if ('emissive' in material && material.emissive instanceof THREE.Color) {
 		return flatColorShader(material.emissive);
 	}
 	return flatColorShader(new THREE.Color(0x000000));
-}
-
-export function shadowShader(shader: TriangleShader, { light, minBrightness, maxBrightness }: {
-	light: THREE.Vector3,
-	minBrightness: number,
-	maxBrightness: number,
-}): TriangleShader {
-	return function(triangle: MeshTriangle, normal: THREE.Vector3): THREE.Color {
-		const color = shader(triangle, normal)
-		const lightDot = normal.dot(light)
-		const brightness = (lightDot + 1) / 2 * (maxBrightness - minBrightness) + minBrightness
-
-		return new THREE.Color(
-			color.r * brightness,
-			color.g * brightness,
-			color.b * brightness,
-		)
-	}
 }
 
 export function RANDOM_COLOR_SHADER(triangle: MeshTriangle): THREE.Color {
@@ -96,7 +91,6 @@ function sampleTriangle(
 	let red = 0;
 	let green = 0;
 	let blue = 0;
-	let count = 0;
 
 	for (const [ba, bb, bc] of barycentricCoordinateForSampling) {
 		// Convert to uv
@@ -105,17 +99,13 @@ function sampleTriangle(
 		
 		const color = uvColorProvider(u, v);
 
-		red += color.r * 255;
-		green += color.g * 255;
-		blue += color.b * 255;
-		count++;
+		red += color.r;
+		green += color.g;
+		blue += color.b;
 	}
 
-	return new THREE.Color(
-		red / count / 255,
-		green / count / 255,
-		blue / count / 255
-	);
+	const count = barycentricCoordinateForSampling.length;
+	return new THREE.Color(red / count, green / count, blue / count);
 }
 
 function sampleCanvasColor(image: CanvasRenderingContext2D, x: number, y: number): THREE.Color {
