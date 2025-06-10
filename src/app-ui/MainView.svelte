@@ -10,20 +10,32 @@ import { debouncedState } from '../utilities/svelteUtilities.svelte';
 import { fa5_solid_home, fa5_solid_info, fa5_brands_github } from 'fontawesome-svgs';
 import CircleButton from '../ui-components/CircleButton.svelte';
 import { githubRepositoryLink, homeLink } from './links';
-import ModelSelector from './ModelSelector.svelte';
+import ModelSelector, { mountainrayMesh } from './ModelSelector.svelte';
 
 let meshView: "original" | "text" = $state("text");
 
 // Inputs
-let mesh: THREE.Object3D = $state.raw(new THREE.Object3D());
+let mesh: THREE.Object3D = $state.raw(mountainrayMesh);
+let scale = $state({ x: 1, y: 1, z: 1 });
+let translate = $state({ x: 0, y: 0, z: 0 });
 let lightPosition = $state({ x: 1, y: 1, z: 1 })
 let minBrightness = $state(0.4);
 let maxBrightness = $state(1.0);
 
+const transformedMesh = $derived.by(() => {
+	const transformed = mesh.clone()
+	transformed.applyMatrix4(
+		new THREE.Matrix4()
+			.makeScale(scale.x, scale.y, scale.z)
+			.setPosition(translate.x, translate.y, translate.z)
+	);
+	return transformed;
+});
+
 const textDisplaysDebounced = debouncedState({
 	delay: 150, 
-	deps: () => [mesh, { ...lightPosition }, minBrightness, maxBrightness],	
-	value: () => meshToTextDisplays(mesh, createShadowProvider({
+	deps: () => [transformedMesh, { ...lightPosition }, minBrightness, maxBrightness],	
+	value: () => meshToTextDisplays(transformedMesh, createShadowProvider({
 		light: new THREE.Vector3(lightPosition.x, lightPosition.y, lightPosition.z).normalize(),
 		minBrightness,
 		maxBrightness,
@@ -50,19 +62,21 @@ function changeButtonText(event: MouseEvent, text: string) {
 
 console.group("For debugging, use these variables.");
 console.log("mesh");
+console.log("transformedMesh");
 console.log("textDisplays");
 console.log("summonCommands");
 console.groupEnd();
 $effect(()=>{
 	Object.assign(globalThis, {
 		mesh,
+		transformedMesh,
 		textDisplays,
 		summonCommands,
 	})
 });
 
 const cameraMaxDistance = $derived.by(() => {
-	const boundingBox = new THREE.Box3().setFromObject(mesh);
+	const boundingBox = new THREE.Box3().setFromObject(transformedMesh);
 	const modelSize = boundingBox.getSize(new THREE.Vector3());
 	const maxDimension = Math.max(modelSize.x, modelSize.y, modelSize.z) || 0;
 	return Math.max(maxDimension * 1.1, 10);
@@ -83,24 +97,67 @@ const cameraMaxDistance = $derived.by(() => {
 		<br>
 		
 		<div class="pt-4 border-t border-t-divider">
+			<h3 class="text-lg font-semibold">Transform</h3>
+		
+			<div class="mb-3">
+				<h4 class="font-medium mb-2">Scale</h4>
+				<div class="grid grid-cols-3 gap-4">
+					<NumberField 
+						label="X"
+						bind:value={scale.x}
+					/>
+					<NumberField 
+						label="Y"
+						bind:value={scale.y}
+					/>
+					<NumberField 
+						label="Z"
+						bind:value={scale.z}
+					/>
+				</div>
+			</div>
+
+			<div class="mb-3">
+				<h4 class="font-medium mb-2">Translate</h4>
+				<div class="grid grid-cols-3 gap-4">
+					<NumberField 
+						label="X"
+						bind:value={translate.x}
+					/>
+					<NumberField 
+						label="Y"
+						bind:value={translate.y}
+					/>
+					<NumberField 
+						label="Z"
+						bind:value={translate.z}
+					/>
+				</div>
+			</div>
+		</div>
+
+		<br>
+		
+		<div class="pt-4 border-t border-t-divider">
 			<h3 class="text-lg font-semibold">Lighting</h3>
 		
-			<div class="grid grid-cols-3 gap-4">
-				<NumberField 
-					label="X"
-					bind:value={lightPosition.x}
-				/>
-				<NumberField 
-					label="Y"
-					bind:value={lightPosition.y}
-				/>
-				<NumberField 
-					label="Z"
-					bind:value={lightPosition.z}
-				/>
+			<div class="mb-3">
+				<h4 class="font-medium mb-2">Position</h4>
+				<div class="grid grid-cols-3 gap-4">
+					<NumberField 
+						label="X"
+						bind:value={lightPosition.x}
+					/>
+					<NumberField 
+						label="Y"
+						bind:value={lightPosition.y}
+					/>
+					<NumberField 
+						label="Z"
+						bind:value={lightPosition.z}
+					/>
+				</div>
 			</div>
-			<small class="opacity-80">Direction of the light source</small>
-			<div class="mb-3"></div>
 			
 			<div class="grid grid-cols-2 gap-4">
 				<NumberField
@@ -194,7 +251,7 @@ const cameraMaxDistance = $derived.by(() => {
 	<!-- Model Viewer -->
 	<div class="relative">
 		<MeshViewer 
-			model={meshView === 'original' ? mesh : textDisplayTrianglesToMesh(textDisplays)}
+			model={meshView === 'original' ? transformedMesh : textDisplayTrianglesToMesh(textDisplays)}
 			maxDistance={cameraMaxDistance}
 			lightPosition={new THREE.Vector3(lightPosition.x, lightPosition.y, lightPosition.z).normalize()}
 		/>

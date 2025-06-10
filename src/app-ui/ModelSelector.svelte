@@ -1,14 +1,19 @@
 <script lang="ts" module>
 	import mountainrayModelURL from '../assets/mountainray/model.glb?url';
+	import mountainrayJuvenileModelURL from '../assets/mountainray/juvenile_model.glb?url';
 	import suzanneModelText from '../assets/suzanne/model.obj?raw';
 	import utahTeapot from '../assets/utah-teapot/model.obj?raw';
 
-	const mountainrayMesh = fixGLTFMaterials((await new GLTFLoader().loadAsync(mountainrayModelURL)).scene);
-	const suzanneMesh = createObjMesh(suzanneModelText, new THREE.MeshStandardMaterial());
-	const utahTeapotMesh = createObjMesh(utahTeapot, new THREE.MeshStandardMaterial());
+	const mountainrayPromise = new GLTFLoader().loadAsync(mountainrayModelURL);
+	const mountainrayJuvenilePromise = new GLTFLoader().loadAsync(mountainrayJuvenileModelURL);
+
+	export const mountainrayMesh = fixGLTFMaterials((await mountainrayPromise).scene);
+	export const mountainrayJuvenileMesh = fixGLTFMaterials((await mountainrayJuvenilePromise).scene);
+	export const suzanneMesh = createObjMesh(suzanneModelText, new THREE.MeshStandardMaterial());
+	export const utahTeapotMesh = createObjMesh(utahTeapot, new THREE.MeshStandardMaterial());
 	suzanneMesh.applyMatrix4(new THREE.Matrix4().makeScale(0.5, 0.5, 0.5));
 	utahTeapotMesh.applyMatrix4(new THREE.Matrix4().makeScale(0.3, 0.3, 0.3));
-	//utahTeapotMesh.applyMatrix4(new THREE.Matrix4().makeTranslation(0, -1, 0));
+	mountainrayJuvenileMesh.applyMatrix4(new THREE.Matrix4().makeScale(0.5, 0.5, 0.5));
 
 	function fixGLTFMaterials(mesh: THREE.Object3D) {
 		// Recreate materials.
@@ -49,8 +54,6 @@
 	import { loadImageAsCanvas } from '../utilities/misc';
 	
 	let { mesh = $bindable(), onUpdateMaterial }: { mesh: THREE.Object3D, onUpdateMaterial: ()=>void } = $props();
-
-	mesh = mountainrayMesh;
 	
 	let textureInput: THREE.Color | THREE.Texture = $state(new THREE.Color(0xffffff));
 	let emissionInput: THREE.Texture | undefined = $state(undefined);
@@ -152,15 +155,16 @@
 
 
 {#snippet presetTab()}
-	<div class="grid grid-cols-3 gap-2 mb-4">
+	<div class="flex flex-wrap gap-2">
 		{#each [
 			{ name: 'Mountainray', mesh: mountainrayMesh },
+			{ name: 'Mountainray Juvenile', mesh: mountainrayJuvenileMesh },
 			{ name: 'Suzanne', mesh: suzanneMesh },
 			{ name: 'Utah Teapot', mesh: utahTeapotMesh }
 		] as preset}
 			<Button
 				variant={preset.mesh === mesh ? 'filled' : 'outlined'}
-				className="!py-1 !px-0 text-sm"
+				className="!py-1 !px-3 text-sm flex-shrink-0"
 				onPress={() => mesh = preset.mesh}
 			>
 				{preset.name}
