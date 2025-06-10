@@ -94,89 +94,85 @@ const cameraMaxDistance = $derived.by(() => {
 			onUpdateMaterial={() => textDisplaysDebounced.invalidate()}
 		/>
 
-		<br>
-		
-		<div class="pt-4 border-t border-t-divider">
-			<h3 class="text-lg font-semibold">Transform</h3>
-		
-			<div class="mb-3">
-				<h4 class="font-medium mb-2">Scale</h4>
-				<div class="grid grid-cols-3 gap-4">
-					<NumberField 
-						label="X"
-						bind:value={scale.x}
-					/>
-					<NumberField 
-						label="Y"
-						bind:value={scale.y}
-					/>
-					<NumberField 
-						label="Z"
-						bind:value={scale.z}
-					/>
-				</div>
-			</div>
-
-			<div class="mb-3">
-				<h4 class="font-medium mb-2">Translate</h4>
-				<div class="grid grid-cols-3 gap-4">
-					<NumberField 
-						label="X"
-						bind:value={translate.x}
-					/>
-					<NumberField 
-						label="Y"
-						bind:value={translate.y}
-					/>
-					<NumberField 
-						label="Z"
-						bind:value={translate.z}
-					/>
-				</div>
+		<hr class="my-4">
+	
+		<h3 class="text-lg font-semibold">Transform</h3>
+	
+		<div class="mb-3">
+			<h4 class="font-medium mb-2">Scale</h4>
+			<div class="grid grid-cols-3 gap-4">
+				<NumberField 
+					label="X"
+					bind:value={scale.x}
+				/>
+				<NumberField 
+					label="Y"
+					bind:value={scale.y}
+				/>
+				<NumberField 
+					label="Z"
+					bind:value={scale.z}
+				/>
 			</div>
 		</div>
 
-		<br>
-		
-		<div class="pt-4 border-t border-t-divider">
-			<h3 class="text-lg font-semibold">Lighting</h3>
-		
-			<div class="mb-3">
-				<h4 class="font-medium mb-2">Position</h4>
-				<div class="grid grid-cols-3 gap-4">
-					<NumberField 
-						label="X"
-						bind:value={lightPosition.x}
-					/>
-					<NumberField 
-						label="Y"
-						bind:value={lightPosition.y}
-					/>
-					<NumberField 
-						label="Z"
-						bind:value={lightPosition.z}
-					/>
-				</div>
+		<div class="mb-3">
+			<h4 class="font-medium mb-2">Translate</h4>
+			<div class="grid grid-cols-3 gap-4">
+				<NumberField 
+					label="X"
+					bind:value={translate.x}
+				/>
+				<NumberField 
+					label="Y"
+					bind:value={translate.y}
+				/>
+				<NumberField 
+					label="Z"
+					bind:value={translate.z}
+				/>
 			</div>
+		</div>
+
+		<hr class="my-4">
+		
+		<h3 class="text-lg font-semibold">Lighting</h3>
+	
+		<div class="mb-3">
+			<h4 class="font-medium mb-2">Position</h4>
+			<div class="grid grid-cols-3 gap-4">
+				<NumberField 
+					label="X"
+					bind:value={lightPosition.x}
+				/>
+				<NumberField 
+					label="Y"
+					bind:value={lightPosition.y}
+				/>
+				<NumberField 
+					label="Z"
+					bind:value={lightPosition.z}
+				/>
+			</div>
+		</div>
+		
+		<div class="grid grid-cols-2 gap-4">
+			<NumberField
+				label="Min Brightness"
+				value={minBrightness}
+				onInput={e => minBrightness = e.value}
+				hint="Range: 0.0-1.0"
+			/>
 			
-			<div class="grid grid-cols-2 gap-4">
-				<NumberField
-					label="Min Brightness"
-					value={minBrightness}
-					onInput={e => minBrightness = e.value}
-					hint="Range: 0.0-1.0"
-				/>
-				
-				<NumberField
-					label="Max Brightness"
-					value={maxBrightness}
-					onInput={e => maxBrightness = e.value}
-					hint="Range: 0.0-1.0"
-				/>
-			</div>
+			<NumberField
+				label="Max Brightness"
+				value={maxBrightness}
+				onInput={e => maxBrightness = e.value}
+				hint="Range: 0.0-1.0"
+			/>
 		</div>
 
-		<br>
+		<hr class="my-4">
 
 		<h2 class="text-xl font-bold mb-4">Output</h2>
 		

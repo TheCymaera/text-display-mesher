@@ -128,22 +128,22 @@
 	<h3 class="text-lg font-semibold">Model</h3>
 
 	<!-- Tab Selector -->
-	<div class="flex space-x-2 mb-4 border-b border-b-divider">
-		<button 
-			class="py-2 px-4 border-b-2 {activeTab === 'presets' ? 'border-primary text-primary-500' : 'text-onSurfaceContainer border-transparent cursor-pointer'}" 
-			onclick={() => activeTab = 'presets'}>
-			Examples
-		</button>
-		<button 
-			class="py-2 px-4 border-b-2 {activeTab === 'obj' ? 'border-primary text-primary-500' : 'text-onSurfaceContainer border-transparent cursor-pointer'}" 
-			onclick={() => activeTab = 'obj'}>
-			OBJ
-		</button>
-		<button 
-			class="py-2 px-4 border-b-2 {activeTab === 'gltf' ? 'border-primary text-primary-500' : 'text-onSurfaceContainer border-transparent cursor-pointer'}" 
-			onclick={() => activeTab = 'gltf'}>
-			GLTF
-		</button>
+	<div class="flex mb-4 border-b border-b-divider">
+		{@render tabButton({
+			text: 'Examples',
+			active: activeTab === 'presets',
+			onClick: () => activeTab = 'presets'
+		})}
+		{@render tabButton({
+			text: 'OBJ',
+			active: activeTab === 'obj',
+			onClick: () => activeTab = 'obj'
+		})}
+		{@render tabButton({
+			text: 'GLTF',
+			active: activeTab === 'gltf',
+			onClick: () => activeTab = 'gltf'
+		})}
 	</div>
 	
 	{@render {
@@ -152,6 +152,19 @@
 		obj: objTab
 	}[activeTab]()}
 </div>
+
+{#snippet tabButton(options: { text: string, active: boolean, onClick: () => void })}
+	<button 
+		class="
+			py-2 px-4 border-b-3 transition-colors
+			outline-[3px] outline-transparent focus-visible:outline-primary-500 outline-offset-[-3px]
+			{options.active ? 'border-primary text-primary-500' : 'text-onSurfaceContainer border-transparent cursor-pointer'}
+		" 
+		onclick={options.onClick}
+		>
+		{options.text}
+	</button>
+{/snippet}
 
 
 {#snippet presetTab()}

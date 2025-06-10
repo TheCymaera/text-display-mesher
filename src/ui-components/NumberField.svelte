@@ -63,8 +63,8 @@
 			inputmode="decimal"
 			class="
 				w-full p-3 border-[.08rem] border-containerBorder rounded-md bg-transparent
-				focus-visible:outline-[3px] outline-primary-500 outline-offset-[-3px]
-				disabled:opacity-50
+				outline-[3px] outline-transparent focus-visible:outline-primary-500 outline-offset-[-3px]
+				disabled:opacity-50 transition-colors
 				{boxClassName}
 				{className.includes("absolute") ? "absolute inset-0" : ""}
 			"

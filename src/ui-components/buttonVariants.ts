@@ -11,7 +11,7 @@ border-[.08rem] border-transparent
 
 transition-colors
 
-focus-visible:outline-[3px] outline-primary-500 outline-offset-[3px]
+outline-[3px] outline-transparent focus-visible:outline-primary-500 outline-offset-[3px]
 disabled:opacity-50
 
 not-disabled:cursor-pointer
@@ -31,7 +31,7 @@ data-on:border-transparent!
 
 transition-colors 
 
-focus-visible:outline-[3px] outline-primary-500 outline-offset-[-3px]
+outline-[3px] outline-transparent focus-visible:outline-primary-500 outline-offset-[-3px]
 disabled:opacity-50
 
 not-disabled:cursor-pointer
@@ -47,7 +47,7 @@ data-pressed:bg-inkWell/25
 
 transition-colors
 
-focus-visible:outline-[3px] outline-primary-500 outline-offset-[-3px]
+outline-[3px] outline-transparent focus-visible:outline-primary-500 outline-offset-[-3px]
 disabled:opacity-70
 
 not-disabled:cursor-pointer
@@ -73,7 +73,7 @@ data-on:before:opacity-30!
 before:transition-[opacity,background-color]
 transition-colors
 
-focus-visible:outline-[3px] outline-primary-500 outline-offset-[-3px]
+outline-[3px] outline-transparent focus-visible:outline-primary-500 outline-offset-[-3px]
 disabled:opacity-50
 
 not-disabled:cursor-pointer

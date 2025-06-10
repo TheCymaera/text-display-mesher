@@ -25,7 +25,7 @@
 	
 	--color-inkWell: #FFFFFF88;
 	--color-containerBorder: #FFFFFF22;
-	--color-divider: #FFFFFF11;
+	--color-divider: #FFFFFF22;
 }
 
 :root {
@@ -70,7 +70,7 @@
 	}
 
 	hr {
-		border-top: 1px solid var(--color-border);
+		border-top: 1px solid var(--color-divider);
 	}
 
 	::-webkit-scrollbar {
