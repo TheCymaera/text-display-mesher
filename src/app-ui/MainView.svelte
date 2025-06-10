@@ -269,7 +269,7 @@ const cameraMaxDistance = $derived.by(() => {
 		</div>
 
 		<div class="absolute bottom-3 right-3 flex flex-col gap-3">
-			<a href="{githubRepositoryLink}" target="_blank">
+			<a href="{githubRepositoryLink}" target="_blank" tabindex="-1">
 				<CircleButton 
 					onPress={() => {}}
 					label="GitHub Repository"
@@ -278,7 +278,7 @@ const cameraMaxDistance = $derived.by(() => {
 				</CircleButton>
 			</a>
 
-			<a href="{homeLink}" target="_blank">
+			<a href="{homeLink}" target="_blank" tabindex="-1">
 				<CircleButton 
 					onPress={() => {}}
 					label="Home"
@@ -287,7 +287,7 @@ const cameraMaxDistance = $derived.by(() => {
 				</CircleButton>
 			</a>
 
-			<a href="#info">
+			<a href="#info" tabindex="-1">
 				<CircleButton 
 					onPress={() => {}}
 					label="Show Information"
